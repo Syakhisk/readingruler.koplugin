@@ -1,4 +1,5 @@
 local Blitbuffer = require("ffi/blitbuffer")
+local Size = require("ui/size")
 local Button = require("ui.widget.button")
 local Device = require("device")
 local FrameContainer = require("ui/widget/container/framecontainer")
@@ -22,6 +23,7 @@ local ReadingRuler = InputContainer:extend({
 
     -- field to store movable container
     movable = nil,
+    drag_handle = nil,
 
     _enabled = true,
     _line_color_intensity = 0.7,
@@ -72,19 +74,32 @@ function ReadingRuler:addToMainMenu(menu_items)
 end
 
 function ReadingRuler:paintTo(bb, x, y)
-    logger.info("--- ReadingRuler paintTo: ", x, y)
+    logger.info("--- ReadingRuler paintTo: ")
 
     if not self._enabled then
         return
     end
 
+    self.movable:paintTo(bb, self.movable.dimen.x, self.movable.dimen.y)
+
     -- NOTE: static y, update this to use events
-    self.movable:paintTo(bb, x, y)
 end
 
-function ReadingRuler:onPan(_, ges)
-    logger.info("--- ReadingRuler onPan")
-    return self.movable:onMovablePan(arg, ges)
+function ReadingRuler:onPan(arg, ges)
+    -- logger.info("--- ReadingRuler onPan", serpent.block(ges))
+
+    if not self._enabled then
+        return
+    end
+
+    logger.info("--- touchPrePanWasInside " .. serpent.block(self.movable._touch_pre_pan_was_inside))
+
+    -- if self.drag_handle.dimen:contains(ges.start_pos) then
+    --     logger.info("--- ReadingRuler onPan: inside")
+    --     -- self.movable.dimen = Geom:new({ x = self.movable.dimen.x, y = ges.pos.y })
+    --     -- return true
+    --     return self.movable:onMovablePan(arg, ges)
+    -- end
 end
 
 function ReadingRuler:buildUI()
@@ -95,19 +110,22 @@ function ReadingRuler:buildUI()
         dimen = Geom:new({ h = self._line_thickness, w = screen_size.w }),
     })
 
+    self.drag_handle = Button:new({
+        text = _("↕"),
+        height = 50,
+        bordersize = 1,
+        callback = function()
+            logger.info("--- Roller plugin button: drag")
+        end,
+
+        overlap_align = "right",
+    })
+
     local movable = MovableContainer:new({
+        dimen = Geom:new({ x = 0, y = screen_size.h * 0.5 }),
         OverlapGroup:new({
             line_wget,
-            Button:new({
-                text = _("↕"),
-                height = 50,
-                bordersize = 1,
-                callback = function()
-                    logger.info("--- Roller plugin button: drag")
-                end,
-
-                overlap_align = "right",
-            }),
+            self.drag_handle,
         }),
     })
 
