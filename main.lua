@@ -1,23 +1,29 @@
-local WidgetContainer = require("ui.widget.container.widgetcontainer")
-local logger = require("logger")
-local UIManager = require("ui/uimanager")
-local _ = require("gettext")
+local Blitbuffer = require("ffi/blitbuffer")
+local Button = require("ui.widget.button")
+local Device = require("device")
+local FrameContainer = require("ui/widget/container/framecontainer")
+local Geom = require("ui.geometry")
+local GestureRange = require("ui/gesturerange")
+local LineWidget = require("ui.widget.linewidget")
 local MovableContainer = require("ui.widget.container.movablecontainer")
 local OverlapGroup = require("ui.widget.overlapgroup")
-local LineWidget = require("ui.widget.linewidget")
-local Blitbuffer = require("ffi/blitbuffer")
-local Geom = require("ui.geometry")
 local Screen = require("device").screen
-local Button = require("ui.widget.button")
+local UIManager = require("ui/uimanager")
+local InputContainer = require("ui.widget.container.inputcontainer")
 
+local _ = require("gettext")
+
+local logger = require("logger")
 local serpent = require("ffi/serpent")
 
-local ReadingRuler = WidgetContainer:extend({
+local ReadingRuler = InputContainer:extend({
     name = "readingruler",
     is_doc_only = true,
 
+    -- field to store movable container
+    movable = nil,
+
     _enabled = true,
-    _movable = nil,
     _line_color_intensity = 0.7,
     _line_thickness = 10,
 })
@@ -25,7 +31,26 @@ local ReadingRuler = WidgetContainer:extend({
 function ReadingRuler:init()
     logger.info("--- ReadingRuler init ---")
 
-    self._movable = self:buildMovableContainer()
+    if Device:isTouchDevice() then
+        logger.info("--- ReadingRuler touch device ---")
+        local range = Geom:new({
+            x = 0,
+            y = 0,
+            w = Screen:getWidth(),
+            h = Screen:getHeight(),
+        })
+
+        self.ges_events = {
+            Pan = {
+                GestureRange:new({
+                    ges = "pan",
+                    range = range,
+                }),
+            },
+        }
+    end
+
+    self.movable = self:buildUI()
 
     self.ui.menu:registerToMainMenu(self)
 
@@ -47,16 +72,22 @@ function ReadingRuler:addToMainMenu(menu_items)
 end
 
 function ReadingRuler:paintTo(bb, x, y)
-    logger.info("--- ReadingRuler paintTo")
+    logger.info("--- ReadingRuler paintTo: ", x, y)
 
     if not self._enabled then
         return
     end
 
-    self._movable:paintTo(bb, x, y)
+    -- NOTE: static y, update this to use events
+    self.movable:paintTo(bb, x, y)
 end
 
-function ReadingRuler:buildMovableContainer()
+function ReadingRuler:onPan(_, ges)
+    logger.info("--- ReadingRuler onPan")
+    return self.movable:onMovablePan(arg, ges)
+end
+
+function ReadingRuler:buildUI()
     local screen_size = Screen.getSize()
 
     local line_wget = LineWidget:new({
