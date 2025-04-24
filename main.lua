@@ -49,6 +49,24 @@ function ReadingRuler:init()
                     range = range,
                 }),
             },
+            PanRelease = {
+                GestureRange:new({
+                    ges = "pan_release",
+                    range = range,
+                }),
+            },
+            Hold = {
+                GestureRange:new({
+                    ges = "hold",
+                    range = range,
+                }),
+            },
+            HoldRelease = {
+                GestureRange:new({
+                    ges = "hold_release",
+                    range = range,
+                }),
+            },
         }
     end
 
@@ -81,25 +99,24 @@ function ReadingRuler:paintTo(bb, x, y)
     end
 
     self.movable:paintTo(bb, self.movable.dimen.x, self.movable.dimen.y)
-
-    -- NOTE: static y, update this to use events
 end
 
-function ReadingRuler:onPan(arg, ges)
-    -- logger.info("--- ReadingRuler onPan", serpent.block(ges))
-
+function ReadingRuler:onPan(_, ges)
     if not self._enabled then
-        return
+        return false
     end
 
-    logger.info("--- touchPrePanWasInside " .. serpent.block(self.movable._touch_pre_pan_was_inside))
+    -- Forward the pan event to the MovableContainer
+    return self.movable:onMovablePan(_, ges)
+end
 
-    -- if self.drag_handle.dimen:contains(ges.start_pos) then
-    --     logger.info("--- ReadingRuler onPan: inside")
-    --     -- self.movable.dimen = Geom:new({ x = self.movable.dimen.x, y = ges.pos.y })
-    --     -- return true
-    --     return self.movable:onMovablePan(arg, ges)
-    -- end
+-- Add these additional event handlers to ensure complete gesture handling
+function ReadingRuler:onPanRelease(_, ges)
+    if not self._enabled then
+        return false
+    end
+
+    return self.movable:onMovablePanRelease(_, ges)
 end
 
 function ReadingRuler:buildUI()
