@@ -1,0 +1,9 @@
+services:
+  koreader:
+    image: ghcr.io/zephyros-dev/koreader:latest
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./koreader:/config/.config/koreader # Persistent storage
+    cap_add:
+      - CAP_NET_RAW # Required for some network options like calibre
