@@ -34,10 +34,6 @@ function ReadingRuler:init()
     self.view:registerViewModule("reading_ruler", self)
     self:onDispatcherRegisterActions()
 
-    if not self._enabled then
-        return
-    end
-
     if Device.isTouchDevice() then
         local range = Geom:new({ x = 0, y = 0, w = Screen:getWidth(), h = Screen:getHeight() })
         self.ges_events = {
@@ -48,7 +44,10 @@ function ReadingRuler:init()
     end
 
     self:addToHighlightDialog()
-    self:buildUI()
+
+    if self._enabled then
+        self:buildUI()
+    end
 end
 
 function ReadingRuler:addToMainMenu(menu_items)
@@ -62,6 +61,7 @@ function ReadingRuler:addToMainMenu(menu_items)
                 end,
                 callback = function()
                     self._enabled = not self._enabled
+                    -- TODO: see if self:buildUI can be used instead of setdirty
                     -- Force a UI refresh when enabling/disabling
                     UIManager:setDirty(self.view.dialog, "partial")
                     return true
@@ -114,10 +114,6 @@ function ReadingRuler:paintTo(bb, x, y)
 end
 
 function ReadingRuler:onHold(_, ges)
-    if not self._enabled then
-        return
-    end
-
     if ges.pos then
         self._last_hold_geom = ges.pos
     end
@@ -156,7 +152,7 @@ end
 function ReadingRuler:addToHighlightDialog()
     self.ui.highlight:addToHighlightDialog("13_z_reading_ruler", function(this)
         return {
-            text = _("Move reading ruler here"),
+            text = _("Move/show reading ruler here"),
             callback = function()
                 self:move(0, self._last_hold_geom.y)
                 this:onClose()
@@ -193,7 +189,14 @@ function ReadingRuler:truncateHorizontalMovement()
     end
 end
 
+-- TODO: get current / last selected text in runtime instead of
+--  recording it on generic hold event, this will make the line dimen more accurate as well.
 function ReadingRuler:move(x, y)
+    if not self._enabled then
+        self._enabled = true
+        UIManager:setDirty(self.view.dialog, "partial")
+    end
+
     local offset = self._movable:getMovedOffset()
     local line_coeff = Screen:getHeight() * 0.01
 
