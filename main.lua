@@ -1,10 +1,7 @@
 local _ = require("gettext")
 local Blitbuffer = require("ffi/blitbuffer")
-local CenterContainer = require("ui/widget/container/centercontainer")
 local Device = require("device")
 local Dispatcher = require("dispatcher") -- luacheck:ignore
-local Event = require("ui/event")
-local FrameContainer = require("ui/widget/container/framecontainer")
 local Geom = require("ui/geometry")
 local GestureRange = require("ui/gesturerange")
 local InputContainer = require("ui/widget/container/inputcontainer")
@@ -24,7 +21,6 @@ local ReadingRuler = InputContainer:extend({
     _line_color_intensity = 0.7,
     _line_thickness = 5,
     _movable = nil,
-    _last_hold_geom = nil,
 
     _ignore_events = {
         -- handle these events ourselves (to call the movablecontainer)
@@ -48,13 +44,7 @@ function ReadingRuler:init()
     if Device.isTouchDevice() then
         local range = Geom:new({ x = 0, y = 0, w = Screen:getWidth(), h = Screen:getHeight() })
         self.ges_events = {
-            Touch = { GestureRange:new({ ges = "tap", range = range }) },
             Swipe = { GestureRange:new({ ges = "swipe", range = range }) },
-            Hold = { GestureRange:new({ ges = "hold", range = range }) },
-            HoldPan = { GestureRange:new({ ges = "hold_pan", range = range }) },
-            HoldRelease = { GestureRange:new({ ges = "hold_release", range = range }) },
-            Pan = { GestureRange:new({ ges = "pan", range = range }) },
-            PanRelease = { GestureRange:new({ ges = "pan_release", range = range }) },
         }
     end
 
@@ -128,61 +118,43 @@ function ReadingRuler:paintTo(bb, x, y)
     InputContainer.paintTo(self, bb, x, y)
 end
 
-function ReadingRuler:onTouch(arg, ges)
-    if self:shouldHandleGesture(ges) then
-        logger.info("ReadingRuler:onTouch")
-        return self._movable:onMovableTouch(arg, ges)
-    end
-end
-
 function ReadingRuler:onSwipe(arg, ges)
     if self:shouldHandleGesture(ges) then
         logger.info("ReadingRuler:onSwipe")
         return self._movable:onMovableSwipe(arg, ges)
     end
-end
 
-function ReadingRuler:onHold(arg, ges)
-    if ges.pos then
-        self._last_hold_geom = ges.pos
+    if ges.direction == "south" then
+        local positions = self:getNearestTextPositions()
+        if positions.next then
+            logger.info("ReadingRuler: move down")
+            self:move(0, positions.next.y + positions.next.h)
+            UIManager:setDirty(self.view.dialog, "partial")
+        else
+            logger.info("ReadingRuler: end of page")
+        end
+
+        return true
     end
 
-    if self:shouldHandleGesture(ges) then
-        logger.info("ReadingRuler:onHold")
-        return self._movable:onMovableHold(arg, ges)
-    end
-end
+    if ges.direction == "north" then
+        local positions = self:getNearestTextPositions()
+        if positions.prev then
+            logger.info("ReadingRuler: move up")
+            self:move(0, positions.prev.y + positions.prev.h)
+            UIManager:setDirty(self.view.dialog, "partial")
+        else
+            logger.info("ReadingRuler: start of page")
+        end
 
-function ReadingRuler:onHoldPan(arg, ges)
-    if self:shouldHandleGesture(ges) then
-        logger.info("ReadingRuler:onHoldPan")
-        return self._movable:onMovableHoldPan(arg, ges)
-    end
-end
-
-function ReadingRuler:onHoldRelease(arg, ges)
-    if self:shouldHandleGesture(ges) then
-        logger.info("ReadingRuler:onHoldRelease")
-        return self._movable:onMovableHoldRelease(arg, ges)
-    end
-end
-
-function ReadingRuler:onPan(arg, ges)
-    if self:shouldHandleGesture(ges) then
-        logger.info("ReadingRuler:onPan")
-        return self._movable:onMovablePan(arg, ges)
-    end
-end
-
-function ReadingRuler:onPanRelease(arg, ges)
-    if self:shouldHandleGesture(ges) then
-        logger.info("ReadingRuler:onPanRelease")
-        return self._movable:onMovablePanRelease(arg, ges)
+        return true
     end
 end
 
 function ReadingRuler:buildUI()
     local screen_size = Screen:getSize()
+
+    self.dimen = Geom:new({ x = 0, y = 0, w = screen_size.w, h = screen_size.h })
 
     local width = screen_size.w
 
@@ -194,21 +166,22 @@ function ReadingRuler:buildUI()
 
     self._movable = MovableContainer:new({
         ignore_events = self._ignore_events,
-
-        -- Add some padding
-        FrameContainer:new({
-            color = Blitbuffer.COLOR_BLACK,
-            bordersize = 0,
-            VerticalGroup:new({
-                line_wget,
-            }),
+        VerticalGroup:new({
+            line_wget,
         }),
     })
 
-    self[1] = CenterContainer:new({
-        dimen = Geom:new({ x = 0, y = 0, w = screen_size.w, h = screen_size.h }),
-        self._movable,
-    })
+    self[1] = self._movable
+end
+
+function ReadingRuler:onPageUpdate()
+    local initial_y = 0
+    local texts = self:getTexts()
+    if #texts.sboxes > 0 then
+        initial_y = texts.sboxes[1].y + texts.sboxes[1].h
+    end
+
+    self._movable:setMovedOffset({ x = 0, y = initial_y })
 end
 
 function ReadingRuler:addToHighlightDialog()
@@ -252,26 +225,63 @@ function ReadingRuler:truncateHorizontalMovement()
     end
 end
 
--- TODO: get current / last selected text in runtime instead of
---  recording it on generic hold event, this will make the line dimen more accurate as well.
 function ReadingRuler:move(x, y)
+    -- logger.info("ReadingRuler: Move to ", x, y)
     if not self._enabled then
         self._enabled = true
         UIManager:setDirty(self.view.dialog, "partial")
     end
 
+    local nearest_text = self:getNearestTextPositions(y).curr
+    if nearest_text and y < nearest_text.y + nearest_text.h then
+        y = nearest_text.y + nearest_text.h
+    end
+
+    -- logger.info("ReadingRuler: Move to (snapped)", x, y)
+
     local offset = self._movable:getMovedOffset()
-
-    offset.x = x - self[1].dimen.w / 2
-    offset.y = y - self[1].dimen.h / 2
-
-    -- logger.info("--------\n", "old_offset: ", self._movable:getMovedOffset(), "\nnew_offset: ", offset)
+    offset.x = x
+    offset.y = y
 
     self._movable:setMovedOffset(offset)
 end
 
 function ReadingRuler:shouldHandleGesture(ges)
     return ges.pos:intersectWith(self._movable.dimen)
+end
+
+function ReadingRuler:getTexts()
+    local page = self.document:getCurrentPage()
+    return self.ui.document:getTextFromPositions(
+        { x = 0, y = 0, page = page },
+        { x = Screen:getWidth(), y = Screen:getHeight() },
+        true
+    )
+end
+
+function ReadingRuler:getNearestTextPositions(y)
+    if y == nil then
+        y = self._movable:getMovedOffset().y
+    end
+
+    local texts = self:getTexts()
+
+    local nearest_idx, nearest_sbox = nil, nil
+    local min_distance = math.huge
+
+    for i, sbox in ipairs(texts.sboxes) do
+        local distance = math.abs(sbox.y + sbox.h - y)
+        if distance < min_distance then
+            min_distance = distance
+            nearest_idx = i
+            nearest_sbox = sbox
+        end
+    end
+
+    local prev = nearest_idx and texts.sboxes[nearest_idx - 1] or nil
+    local next = nearest_idx and texts.sboxes[nearest_idx + 1] or nil
+
+    return { prev = prev, curr = nearest_sbox, next = next }
 end
 
 return ReadingRuler
