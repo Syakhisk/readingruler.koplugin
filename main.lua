@@ -1,5 +1,7 @@
 local Blitbuffer = require("ffi/blitbuffer")
+local Device = require("device")
 local Geom = require("ui/geometry")
+local GestureRange = require("ui/gesturerange")
 local LineWidget = require("ui/widget/linewidget")
 local MovableContainer = require("ui/widget/container/movablecontainer")
 local FrameContainer = require("ui/widget/container/framecontainer")
@@ -15,14 +17,12 @@ local ReadingRuler = InputContainer:extend({
     name = "readingruler",
     is_doc_only = true,
 
-    -- field to store movable container
-    movable = nil,
-
+    -- TODO: use config files to set default value, see perceptionexpander plugin
     _enabled = true,
     _line_color_intensity = 0.7,
     _line_thickness = 5,
-    _show_overlay = false,
     _movable = nil,
+    _last_hold_geom = nil,
 })
 
 function ReadingRuler:init()
@@ -35,6 +35,16 @@ function ReadingRuler:init()
         return
     end
 
+    if Device.isTouchDevice() then
+        local range = Geom:new({ x = 0, y = 0, w = Screen:getWidth(), h = Screen:getHeight() })
+        self.ges_events = {
+            Hold = {
+                GestureRange:new({ ges = "hold", range = range }),
+            },
+        }
+    end
+
+    self:addToHighlightDialog()
     self:buildUI()
 end
 
@@ -77,6 +87,16 @@ function ReadingRuler:paintTo(bb, x, y)
     InputContainer.paintTo(self, bb, x, y)
 end
 
+function ReadingRuler:onHold(_, ges)
+    if not self._enabled then
+        return
+    end
+
+    if ges.pos then
+        self._last_hold_geom = ges.pos
+    end
+end
+
 function ReadingRuler:buildUI()
     local screen_size = Screen:getSize()
 
@@ -107,6 +127,18 @@ function ReadingRuler:buildUI()
     })
 end
 
+function ReadingRuler:addToHighlightDialog()
+    self.ui.highlight:addToHighlightDialog("13_z_reading_ruler", function(this)
+        return {
+            text = _("Move reading ruler here"),
+            callback = function()
+                self:move(0, self._last_hold_geom.y)
+                this:onClose()
+            end,
+        }
+    end)
+end
+
 function ReadingRuler:resetPosition()
     self._movable:setMovedOffset({ x = 0, y = 0 })
 end
@@ -117,6 +149,18 @@ function ReadingRuler:truncateHorizontalMovement()
         offset.x = 0
         self._movable:setMovedOffset(offset)
     end
+end
+
+function ReadingRuler:move(x, y)
+    local offset = self._movable:getMovedOffset()
+    local line_coeff = Screen:getHeight() * 0.01
+
+    offset.x = x - self[1].dimen.w / 2
+    offset.y = y - self[1].dimen.h / 2 + line_coeff
+
+    -- logger.info("--------\n", "old_offset: ", self._movable:getMovedOffset(), "\nnew_offset: ", offset)
+
+    self._movable:setMovedOffset(offset)
 end
 
 return ReadingRuler
