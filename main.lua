@@ -79,10 +79,26 @@ function ReadingRuler:addToMainMenu(menu_items)
 end
 
 function ReadingRuler:onDispatcherRegisterActions()
+    Dispatcher:registerAction("reading_ruler_set_state", {
+        category = "string",
+        event = "ReadingRulerSetState",
+        title = _("Reading Ruler"),
+        general = true,
+        args = { true, false },
+        toggle = { _("enable"), _("disable") },
+    })
+
+    Dispatcher:registerAction("reading_ruler_toggle", {
+        category = "none",
+        event = "ReadingRulerToggle",
+        title = _("Reading Ruler: toggle"),
+        general = true,
+    })
+
     Dispatcher:registerAction("reading_ruler_reset_position_action", {
         category = "none",
         event = "ReadingRulerResetPosition",
-        title = _("ReadingRuler: Reset position"),
+        title = _("Reading Ruler: Reset position"),
         general = true,
     })
 end
@@ -155,6 +171,18 @@ function ReadingRuler:onReadingRulerResetPosition()
         self._movable:setMovedOffset({ x = 0, y = 0 })
         UIManager:setDirty(self.view.dialog, "partial")
     end
+end
+
+function ReadingRuler:onReadingRulerSetState(state)
+    logger.info("ReadingRuler: Set state to ", state)
+    self._enabled = state
+    UIManager:setDirty(self.view.dialog, "partial")
+end
+
+function ReadingRuler:onReadingRulerToggle()
+    logger.info("ReadingRuler: Toggle to ", not self._enabled)
+    self._enabled = not self._enabled
+    UIManager:setDirty(self.view.dialog, "partial")
 end
 
 function ReadingRuler:truncateHorizontalMovement()
