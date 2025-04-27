@@ -25,6 +25,17 @@ local ReadingRuler = InputContainer:extend({
     _line_thickness = 5,
     _movable = nil,
     _last_hold_geom = nil,
+
+    _ignore_events = {
+        -- handle these events ourselves (to call the movablecontainer)
+        "hold",
+        "hold_release",
+        "hold_pan",
+        "swipe",
+        "touch",
+        "pan",
+        "pan_release",
+    },
 })
 
 function ReadingRuler:init()
@@ -37,9 +48,13 @@ function ReadingRuler:init()
     if Device.isTouchDevice() then
         local range = Geom:new({ x = 0, y = 0, w = Screen:getWidth(), h = Screen:getHeight() })
         self.ges_events = {
-            Hold = {
-                GestureRange:new({ ges = "hold", range = range }),
-            },
+            Touch = { GestureRange:new({ ges = "tap", range = range }) },
+            Swipe = { GestureRange:new({ ges = "swipe", range = range }) },
+            Hold = { GestureRange:new({ ges = "hold", range = range }) },
+            HoldPan = { GestureRange:new({ ges = "hold_pan", range = range }) },
+            HoldRelease = { GestureRange:new({ ges = "hold_release", range = range }) },
+            Pan = { GestureRange:new({ ges = "pan", range = range }) },
+            PanRelease = { GestureRange:new({ ges = "pan_release", range = range }) },
         }
     end
 
@@ -113,9 +128,56 @@ function ReadingRuler:paintTo(bb, x, y)
     InputContainer.paintTo(self, bb, x, y)
 end
 
-function ReadingRuler:onHold(_, ges)
+function ReadingRuler:onTouch(arg, ges)
+    if self:shouldHandleGesture(ges) then
+        logger.info("ReadingRuler:onTouch")
+        return self._movable:onMovableTouch(arg, ges)
+    end
+end
+
+function ReadingRuler:onSwipe(arg, ges)
+    if self:shouldHandleGesture(ges) then
+        logger.info("ReadingRuler:onSwipe")
+        return self._movable:onMovableSwipe(arg, ges)
+    end
+end
+
+function ReadingRuler:onHold(arg, ges)
     if ges.pos then
         self._last_hold_geom = ges.pos
+    end
+
+    if self:shouldHandleGesture(ges) then
+        logger.info("ReadingRuler:onHold")
+        return self._movable:onMovableHold(arg, ges)
+    end
+end
+
+function ReadingRuler:onHoldPan(arg, ges)
+    if self:shouldHandleGesture(ges) then
+        logger.info("ReadingRuler:onHoldPan")
+        return self._movable:onMovableHoldPan(arg, ges)
+    end
+end
+
+function ReadingRuler:onHoldRelease(arg, ges)
+    if self:shouldHandleGesture(ges) then
+        logger.info("ReadingRuler:onHoldRelease")
+        return self._movable:onMovableHoldRelease(arg, ges)
+    end
+end
+
+function ReadingRuler:onPan(arg, ges)
+    if self:shouldHandleGesture(ges) then
+        logger.info("ReadingRuler:onPan")
+        return self._movable:onMovablePan(arg, ges)
+    end
+end
+
+function ReadingRuler:onPanRelease(arg, ges)
+    if self:shouldHandleGesture(ges) then
+        logger.info("ReadingRuler:onPanRelease")
+        return self._movable:onMovablePanRelease(arg, ges)
     end
 end
 
@@ -206,6 +268,10 @@ function ReadingRuler:move(x, y)
     -- logger.info("--------\n", "old_offset: ", self._movable:getMovedOffset(), "\nnew_offset: ", offset)
 
     self._movable:setMovedOffset(offset)
+end
+
+function ReadingRuler:shouldHandleGesture(ges)
+    return ges.pos:intersectWith(self._movable.dimen)
 end
 
 return ReadingRuler
