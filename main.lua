@@ -1,16 +1,18 @@
+local _ = require("gettext")
 local Blitbuffer = require("ffi/blitbuffer")
+local CenterContainer = require("ui/widget/container/centercontainer")
 local Device = require("device")
+local Dispatcher = require("dispatcher") -- luacheck:ignore
+local Event = require("ui/event")
+local FrameContainer = require("ui/widget/container/framecontainer")
 local Geom = require("ui/geometry")
 local GestureRange = require("ui/gesturerange")
+local InputContainer = require("ui/widget/container/inputcontainer")
 local LineWidget = require("ui/widget/linewidget")
 local MovableContainer = require("ui/widget/container/movablecontainer")
-local FrameContainer = require("ui/widget/container/framecontainer")
-local CenterContainer = require("ui/widget/container/centercontainer")
-local VerticalGroup = require("ui/widget/verticalgroup")
 local Screen = require("device").screen
 local UIManager = require("ui/uimanager")
-local InputContainer = require("ui/widget/container/inputcontainer")
-local _ = require("gettext")
+local VerticalGroup = require("ui/widget/verticalgroup")
 local logger = require("logger")
 
 local ReadingRuler = InputContainer:extend({
@@ -30,6 +32,7 @@ function ReadingRuler:init()
 
     self.ui.menu:registerToMainMenu(self)
     self.view:registerViewModule("reading_ruler", self)
+    self:onDispatcherRegisterActions()
 
     if not self._enabled then
         return
@@ -68,13 +71,20 @@ function ReadingRuler:addToMainMenu(menu_items)
                 text = _("Reset Position"),
                 callback = function()
                     -- Reset the position of the movable container
-                    if self._movable then
-                        self:resetPosition()
-                    end
+                    self:onReadingRulerResetPosition()
                 end,
             },
         },
     }
+end
+
+function ReadingRuler:onDispatcherRegisterActions()
+    Dispatcher:registerAction("reading_ruler_reset_position_action", {
+        category = "none",
+        event = "ReadingRulerResetPosition",
+        title = _("ReadingRuler: Reset position"),
+        general = true,
+    })
 end
 
 function ReadingRuler:paintTo(bb, x, y)
@@ -139,8 +149,12 @@ function ReadingRuler:addToHighlightDialog()
     end)
 end
 
-function ReadingRuler:resetPosition()
-    self._movable:setMovedOffset({ x = 0, y = 0 })
+function ReadingRuler:onReadingRulerResetPosition()
+    logger.info("ReadingRuler: Reset position")
+    if self._movable then
+        self._movable:setMovedOffset({ x = 0, y = 0 })
+        UIManager:setDirty(self.view.dialog, "partial")
+    end
 end
 
 function ReadingRuler:truncateHorizontalMovement()
