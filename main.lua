@@ -69,8 +69,8 @@ function ReadingRuler:addToMainMenu(menu_items)
                 end,
                 callback = function()
                     self._enabled = not self._enabled
-                    -- TODO: see if self:buildUI can be used instead of setdirty
-                    -- Force a UI refresh when enabling/disabling
+
+                    -- TODO: change to better dirty
                     UIManager:setDirty(self.view.dialog, "partial")
                     return true
                 end,
@@ -101,7 +101,6 @@ function ReadingRuler:onSwipe(_, ges)
         if positions.next then
             logger.info("ReadingRuler: move down")
             self:move(0, positions.next.y + positions.next.h)
-            UIManager:setDirty(self.view.dialog, "partial")
             return true
         else
             logger.info("ReadingRuler: end of page")
@@ -112,7 +111,6 @@ function ReadingRuler:onSwipe(_, ges)
         if positions.prev then
             logger.info("ReadingRuler: move up")
             self:move(0, positions.prev.y + positions.prev.h)
-            UIManager:setDirty(self.view.dialog, "partial")
             return true
         else
             logger.info("ReadingRuler: start of page")
@@ -148,6 +146,8 @@ function ReadingRuler:onReadingRulerResetPosition()
     logger.info("ReadingRuler: Reset position")
     if self._movable then
         self._movable:setMovedOffset({ x = 0, y = 0 })
+
+        -- TODO: change to better dirty
         UIManager:setDirty(self.view.dialog, "partial")
     end
 end
@@ -155,12 +155,16 @@ end
 function ReadingRuler:onReadingRulerSetState(state)
     logger.info("ReadingRuler: Set state to ", state)
     self._enabled = state
+
+    -- TODO: change to better dirty
     UIManager:setDirty(self.view.dialog, "partial")
 end
 
 function ReadingRuler:onReadingRulerToggle()
     logger.info("ReadingRuler: Toggle to ", not self._enabled)
     self._enabled = not self._enabled
+
+    -- TODO: change to better dirty
     UIManager:setDirty(self.view.dialog, "partial")
 end
 
@@ -216,14 +220,24 @@ end
 function ReadingRuler:move(x, y)
     if not self._enabled then
         self._enabled = true
+
+        -- TODO: change to better dirty
         UIManager:setDirty(self.view.dialog, "partial")
     end
+
+    local orig_dimen = self._movable.dimen:copy() -- dimen before move/paintTo
 
     local offset = self._movable:getMovedOffset()
     offset.x = x
     offset.y = y
 
     self._movable:setMovedOffset(offset)
+
+    UIManager:setDirty("all", function()
+        local update_region = orig_dimen:combine(self._movable.dimen)
+        logger.dbg("MovableContainer refresh region", update_region)
+        return "ui", update_region
+    end)
 end
 
 function ReadingRuler:getTexts(ignore_cache)
