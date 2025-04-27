@@ -36,6 +36,8 @@ local ReadingRuler = InputContainer:extend({
         "pan",
         "pan_release",
     },
+
+    _swipe_threshold_ratio = 0.1,
 })
 
 function ReadingRuler:init()
@@ -139,6 +141,34 @@ function ReadingRuler:onSwipe(arg, ges)
     if self:shouldHandleGesture(ges) then
         logger.info("ReadingRuler:onSwipe")
         return self._movable:onMovableSwipe(arg, ges)
+    end
+
+    if ges.distance > Screen:getHeight() * self._swipe_threshold_ratio then
+        if ges.direction == "south" then
+            local positions = self:getNearestTextPositions()
+            if positions.next then
+                logger.info("ReadingRuler: move down")
+                self:move(0, positions.next.y + positions.next.h)
+                UIManager:setDirty(self.view.dialog, "partial")
+            else
+                logger.info("ReadingRuler: end of page")
+            end
+
+            return true
+        end
+
+        if ges.direction == "north" then
+            local positions = self:getNearestTextPositions()
+            if positions.prev then
+                logger.info("ReadingRuler: move up")
+                self:move(0, positions.prev.y + positions.prev.h)
+                UIManager:setDirty(self.view.dialog, "partial")
+            else
+                logger.info("ReadingRuler: start of page")
+            end
+
+            return true
+        end
     end
 end
 
@@ -272,6 +302,42 @@ end
 
 function ReadingRuler:shouldHandleGesture(ges)
     return ges.pos:intersectWith(self._movable.dimen)
+end
+
+function ReadingRuler:getNearestTextPositions()
+    local ruler_y = self:getRulerGeom().y
+
+    local pageno = self.document:getCurrentPage()
+    local texts = self.ui.document:getTextFromPositions(
+        { x = 0, y = 0, page = pageno },
+        { x = Screen:getWidth(), y = Screen:getHeight() },
+        true
+    )
+
+    local curr_idx, curr = nil, nil
+    for i = 1, #texts.sboxes do
+        local sbox = texts.sboxes[i]
+
+        if curr == nil or math.abs(sbox.y + sbox.h - ruler_y) < math.abs(curr.y + curr.h - ruler_y) then
+            curr_idx = i
+            curr = sbox
+        end
+    end
+
+    local prev, next = nil, nil
+    if curr_idx ~= nil then
+        prev = curr_idx > 1 and texts.sboxes[curr_idx - 1] or nil
+        next = curr_idx < #texts.sboxes and texts.sboxes[curr_idx + 1] or nil
+    end
+
+    return { prev = prev, curr = curr, next = next }
+end
+
+function ReadingRuler:getRulerGeom()
+    local center = self[1].dimen.h / 2
+    local offset_y = self._movable:getMovedOffset().y
+
+    return Geom:new({ x = self[1].dimen.x, y = offset_y + center, w = self._movable.dimen.w, h = self._movable.dimen.h })
 end
 
 return ReadingRuler
