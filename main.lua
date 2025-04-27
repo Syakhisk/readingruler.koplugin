@@ -1,9 +1,8 @@
 local _ = require("gettext")
 local Blitbuffer = require("ffi/blitbuffer")
-local CenterContainer = require("ui/widget/container/centercontainer")
+local WidgetContainer = require("ui/widget/container/widgetcontainer")
 local Device = require("device")
 local Dispatcher = require("dispatcher") -- luacheck:ignore
-local Event = require("ui/event")
 local FrameContainer = require("ui/widget/container/framecontainer")
 local Geom = require("ui/geometry")
 local GestureRange = require("ui/gesturerange")
@@ -235,7 +234,7 @@ function ReadingRuler:buildUI()
         }),
     })
 
-    self[1] = CenterContainer:new({
+    self[1] = WidgetContainer:new({
         dimen = Geom:new({ x = 0, y = 0, w = screen_size.w, h = screen_size.h }),
         self._movable,
     })
@@ -307,12 +306,7 @@ end
 function ReadingRuler:getNearestTextPositions()
     local ruler_y = self:getRulerGeom().y
 
-    local pageno = self.document:getCurrentPage()
-    local texts = self.ui.document:getTextFromPositions(
-        { x = 0, y = 0, page = pageno },
-        { x = Screen:getWidth(), y = Screen:getHeight() },
-        true
-    )
+    local texts = self:getTexts()
 
     local curr_idx, curr = nil, nil
     for i = 1, #texts.sboxes do
@@ -338,6 +332,15 @@ function ReadingRuler:getRulerGeom()
     local offset_y = self._movable:getMovedOffset().y
 
     return Geom:new({ x = self[1].dimen.x, y = offset_y + center, w = self._movable.dimen.w, h = self._movable.dimen.h })
+end
+
+function ReadingRuler:getTexts()
+    local pageno = self.document:getCurrentPage()
+    return self.ui.document:getTextFromPositions(
+        { x = 0, y = 0, page = pageno },
+        { x = Screen:getWidth(), y = Screen:getHeight() },
+        true
+    )
 end
 
 return ReadingRuler
