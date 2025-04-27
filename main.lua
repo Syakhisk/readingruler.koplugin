@@ -216,7 +216,8 @@ function ReadingRuler:addToHighlightDialog()
         return {
             text = _("Move/show reading ruler here"),
             callback = function()
-                self:move(0, self._last_hold_geom.y)
+                local sbox = this.selected_text.sboxes[#this.selected_text.sboxes]
+                self:move(0, sbox.y + sbox.h)
                 this:onClose()
             end,
         }
@@ -260,10 +261,9 @@ function ReadingRuler:move(x, y)
     end
 
     local offset = self._movable:getMovedOffset()
-    local line_coeff = Screen:getHeight() * 0.01
 
     offset.x = x - self[1].dimen.w / 2
-    offset.y = y - self[1].dimen.h / 2 + line_coeff
+    offset.y = y - self[1].dimen.h / 2
 
     -- logger.info("--------\n", "old_offset: ", self._movable:getMovedOffset(), "\nnew_offset: ", offset)
 
