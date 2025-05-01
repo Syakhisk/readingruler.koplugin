@@ -7,9 +7,9 @@ local GestureRange = require("ui/gesturerange")
 local InputContainer = require("ui/widget/container/inputcontainer")
 local LineWidget = require("ui/widget/linewidget")
 local MovableContainer = require("ui/widget/container/movablecontainer")
+local FrameContainer = require("ui/widget/container/framecontainer")
 local Screen = require("device").screen
 local UIManager = require("ui/uimanager")
-local VerticalGroup = require("ui/widget/verticalgroup")
 local logger = require("logger")
 
 local ReadingRuler = InputContainer:extend({
@@ -20,8 +20,10 @@ local ReadingRuler = InputContainer:extend({
     _enabled = true,
     _line_color_intensity = 0.7,
     _line_thickness = 5,
+
     _movable = nil,
-    _line_wget = nil,
+    _touch_container = nil,
+    _line = nil,
 
     _cached_texts = nil,
     _cached_texts_page = nil,
@@ -94,6 +96,8 @@ function ReadingRuler:addToHighlightDialog()
         return {
             text = _("Move/show reading ruler here"),
             callback = function()
+                -- TODO: fix crash here if click on highlight
+                -- logger.info(this)
                 local sbox = this.selected_text.sboxes[#this.selected_text.sboxes]
                 self:move(0, sbox.y + sbox.h)
                 this:onClose()
@@ -108,9 +112,9 @@ function ReadingRuler:paintTo(bb, x, y)
     end
 
     if self._tap_to_move then
-        self._line_wget.style = "dashed"
+        self._line.style = "dashed"
     else
-        self._line_wget.style = "solid"
+        self._line.style = "solid"
     end
 
     InputContainer.paintTo(self, bb, x, y)
@@ -198,7 +202,7 @@ function ReadingRuler:onPageUpdate(new_page)
     local is_jump = math.abs(new_page - self._last_page) > 1
     local idx = 1
 
-    -- logger.info("is_jump", is_jump, "direction", direction, "new_page", new_page, "last_page", self._last_page)
+    logger.info("is_jump", is_jump, "direction", direction, "new_page", new_page, "last_page", self._last_page)
 
     if not is_jump and direction == "prev" then
         idx = #texts.sboxes
@@ -206,7 +210,7 @@ function ReadingRuler:onPageUpdate(new_page)
 
     local y = texts.sboxes[idx].y + texts.sboxes[idx].h
 
-    self._movable:setMovedOffset({ x = 0, y = y })
+    self:move(0, y)
 
     self._last_page = new_page
 end
@@ -272,21 +276,31 @@ function ReadingRuler:buildUI()
     local width = screen_size.w
 
     -- Create the horizontal line widget
-    self._line_wget = LineWidget:new({
+    self._line = LineWidget:new({
         background = Blitbuffer.gray(self._line_color_intensity),
         dimen = Geom:new({ h = self._line_thickness, w = width }),
     })
 
+    self._touch_container = FrameContainer:new({
+        color = Blitbuffer.gray(self._line_color_intensity),
+        bordersize = 1,
+        padding = 0,
+        padding_top = screen_size.h * 0.01,
+        padding_bottom = screen_size.h * 0.01,
+        self._line,
+    })
+
     self._movable = MovableContainer:new({
         ignore_events = self._ignore_events,
-        VerticalGroup:new({
-            self._line_wget,
-        }),
+        self._touch_container,
     })
 
     self[1] = self._movable
 end
 
+-- TODO: every movement should be done here,
+--  and every x,y in the movement expect a line without container.
+--  we should translate/transform the movement to compensate the container
 function ReadingRuler:move(x, y)
     if not self._enabled then
         self._enabled = true
@@ -294,19 +308,18 @@ function ReadingRuler:move(x, y)
         UIManager:setDirty(self.view.dialog, "partial")
     end
 
-    local orig_dimen = self._movable.dimen:copy() -- dimen before move/paintTo
+    self._movable:setMovedOffset({ x = x, y = y })
 
-    local offset = self._movable:getMovedOffset()
-    offset.x = x
-    offset.y = y
+    -- only set dirty if movable is already rendered previously
+    if self._movable ~= nil then
+        local orig_dimen = self._movable.dimen:copy() -- dimen before move/paintTo
 
-    self._movable:setMovedOffset(offset)
-
-    UIManager:setDirty("all", function()
-        local update_region = orig_dimen:combine(self._movable.dimen)
-        logger.dbg("MovableContainer refresh region", update_region)
-        return "ui", update_region
-    end)
+        UIManager:setDirty("all", function()
+            local update_region = orig_dimen:combine(self._movable.dimen)
+            logger.dbg("MovableContainer refresh region", update_region)
+            return "ui", update_region
+        end)
+    end
 end
 
 function ReadingRuler:getTexts(ignore_cache)
