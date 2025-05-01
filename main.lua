@@ -21,9 +21,11 @@ local ReadingRuler = InputContainer:extend({
     _line_color_intensity = 0.7,
     _line_thickness = 5,
     _movable = nil,
+    _line_wget = nil,
 
     _cached_texts = nil,
     _cached_texts_page = nil,
+    _last_page = 0,
 
     _ignore_events = {
         -- handle these events ourselves (to call the movablecontainer)
@@ -48,6 +50,8 @@ function ReadingRuler:init()
         local range = Geom:new({ x = 0, y = 0, w = Screen:getWidth(), h = Screen:getHeight() })
         self.ges_events = {
             Swipe = { GestureRange:new({ ges = "swipe", range = range }) },
+            Hold = { GestureRange:new({ ges = "hold", range = range }) },
+            Tap = { GestureRange:new({ ges = "tap", range = range }) },
         }
     end
 
@@ -86,49 +90,6 @@ function ReadingRuler:addToMainMenu(menu_items)
     }
 end
 
-function ReadingRuler:paintTo(bb, x, y)
-    if not self._enabled then
-        return
-    end
-
-    InputContainer.paintTo(self, bb, x, y)
-end
-
-function ReadingRuler:onSwipe(_, ges)
-    local positions = self:getNearestTextPositions()
-
-    if ges.direction == "south" then
-        if positions.next then
-            logger.info("ReadingRuler: move down")
-            self:move(0, positions.next.y + positions.next.h)
-            return true
-        else
-            logger.info("ReadingRuler: end of page")
-        end
-    end
-
-    if ges.direction == "north" then
-        if positions.prev then
-            logger.info("ReadingRuler: move up")
-            self:move(0, positions.prev.y + positions.prev.h)
-            return true
-        else
-            logger.info("ReadingRuler: start of page")
-        end
-    end
-end
-
-function ReadingRuler:onPageUpdate()
-    local initial_y = 0
-    local texts = self:getTexts(true)
-
-    if #texts.sboxes > 0 then
-        initial_y = texts.sboxes[1].y + texts.sboxes[1].h
-    end
-
-    self._movable:setMovedOffset({ x = 0, y = initial_y })
-end
-
 function ReadingRuler:addToHighlightDialog()
     self.ui.highlight:addToHighlightDialog("13_z_reading_ruler", function(this)
         return {
@@ -142,7 +103,120 @@ function ReadingRuler:addToHighlightDialog()
     end)
 end
 
+function ReadingRuler:paintTo(bb, x, y)
+    if not self._enabled then
+        return
+    end
+
+    if self._tap_to_move then
+        self._line_wget.style = "dashed"
+    else
+        self._line_wget.style = "solid"
+    end
+
+    InputContainer.paintTo(self, bb, x, y)
+end
+
+function ReadingRuler:onSwipe(_, ges)
+    -- TODO: ignore swipe on screen edges
+
+    if not self._enabled then
+        return false
+    end
+
+    local positions = self:getNearestTextPositions()
+
+    if ges.direction == "south" then
+        if positions.next then
+            -- logger.info("ReadingRuler: move down")
+            self:move(0, positions.next.y + positions.next.h)
+            return true
+        else
+            logger.info("ReadingRuler: end of page")
+            -- self.ui.document:gotoPage(self.document:getPageCount() - 1)
+        end
+    end
+
+    if ges.direction == "north" then
+        if positions.prev then
+            -- logger.info("ReadingRuler: move up")
+            self:move(0, positions.prev.y + positions.prev.h)
+            return true
+        else
+            logger.info("ReadingRuler: start of page")
+            -- self.ui.document:gotoPage(self.document:getPageCount() + 1)
+        end
+    end
+end
+
+function ReadingRuler:onHold(_, ges)
+    if not self._enabled then
+        return false
+    end
+
+    if not ges.pos:intersectWith(self._movable.dimen) then
+        return false
+    end
+
+    self._tap_to_move = true
+
+    -- trigger a repaint to show the dashed line
+    self:move(0, self._movable:getMovedOffset().y)
+
+    return true
+end
+
+function ReadingRuler:onTap(_, ges)
+    if not self._enabled then
+        return false
+    end
+
+    if not self._tap_to_move then
+        return false
+    end
+
+    local positions = self:getNearestTextPositions(ges.pos.y)
+    self:move(0, positions.curr.y + positions.curr.h)
+    self._tap_to_move = false
+
+    return true
+end
+
+function ReadingRuler:onPageUpdate(new_page)
+    -- TODO: make sure this doesn't force full page redraw
+
+    if not self._enabled then
+        return
+    end
+
+    local texts = self:getTexts(true)
+
+    if #texts.sboxes < 1 then
+        return
+    end
+
+    local direction = new_page >= self._last_page and "next" or "prev"
+    local is_jump = math.abs(new_page - self._last_page) > 1
+    local idx = 1
+
+    -- logger.info("is_jump", is_jump, "direction", direction, "new_page", new_page, "last_page", self._last_page)
+
+    if not is_jump and direction == "prev" then
+        idx = #texts.sboxes
+    end
+
+    local y = texts.sboxes[idx].y + texts.sboxes[idx].h
+
+    self._movable:setMovedOffset({ x = 0, y = y })
+
+    self._last_page = new_page
+end
+
 function ReadingRuler:onReadingRulerResetPosition()
+    if not self._enabled then
+        return
+    end
+
     logger.info("ReadingRuler: Reset position")
     if self._movable then
         self._movable:setMovedOffset({ x = 0, y = 0 })
@@ -202,7 +276,7 @@ function ReadingRuler:buildUI()
     local width = screen_size.w
 
     -- Create the horizontal line widget
-    local line_wget = LineWidget:new({
+    self._line_wget = LineWidget:new({
         background = Blitbuffer.gray(self._line_color_intensity),
         dimen = Geom:new({ h = self._line_thickness, w = width }),
     })
@@ -210,7 +284,7 @@ function ReadingRuler:buildUI()
     self._movable = MovableContainer:new({
         ignore_events = self._ignore_events,
         VerticalGroup:new({
-            line_wget,
+            self._line_wget,
         }),
     })
 
@@ -233,6 +307,7 @@ function ReadingRuler:move(x, y)
 
     self._movable:setMovedOffset(offset)
 
+    -- TODO: is this correct?
     UIManager:setDirty("all", function()
         local update_region = orig_dimen:combine(self._movable.dimen)
         logger.dbg("MovableContainer refresh region", update_region)
@@ -244,11 +319,11 @@ function ReadingRuler:getTexts(ignore_cache)
     local page = self.document:getCurrentPage()
 
     if not ignore_cache and self._cached_texts and self._cached_texts_page == page then
-        logger.info("ReadingRuler: cache hit")
+        -- logger.info("ReadingRuler: cache hit")
         return self._cached_texts
     end
 
-    logger.info("ReadingRuler: cache miss")
+    -- logger.info("ReadingRuler: cache miss")
 
     local texts = self.ui.document:getTextFromPositions(
         { x = 0, y = 0, page = page },
