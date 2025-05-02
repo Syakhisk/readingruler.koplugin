@@ -1,0 +1,41 @@
+# Reading Ruler Plugin for KOReader
+
+The **Reading Ruler** plugin is a tool designed to enhance the reading experience on KOReader by providing a movable horizontal line that helps readers focus on specific lines of text. This is especially useful for individuals who prefer guided reading or have difficulty maintaining focus while reading.
+
+## Features
+
+- **Movable Horizontal Line**: A customizable line that can be moved up or down to guide your reading.
+- **Tap-to-Move Mode**: Quickly reposition the ruler by tapping on the desired location.
+- **Swipe Navigation**: Use swipe gestures to move the ruler to the next or previous line of text.
+- **Automatic Page Navigation**: Automatically navigate to the next or previous page when reaching the end of the current page.
+- **Reset Position**: Easily reset the ruler to its default position.
+
+## How It Works
+
+1. **Enable the Plugin**: Activate the Reading Ruler from the main menu.
+2. **Move the Ruler**:
+
+   - Swipe up or down to navigate between lines.
+   - Use tap-to-move mode to reposition the ruler by tap/hold the ruler and then tap on the desired location.
+
+## Installation
+
+1. Copy the `readingruler.koplugin` folder into the `plugins` directory of your KOReader installation.
+2. Restart KOReader to load the plugin.
+
+## Known Issues
+
+### Two Columns Mode
+
+Some features of this plugin may not work as expected in two columns mode, this may be fixed in the future:
+
+- Swipe navigation on page start/end will not move to next/previous page.
+- The ruler may jump further than expected if the left and right columns texts are not aligned.
+
+## Possible improvements
+
+- Add option to disable default gestures and make user create custom KOReader gestures for the plugin.
+
+## Contributions
+
+I have been using this plugin myself, and as of now, I don't need any additional features. However, I am open to feature requests to improve the plugin. Pull requests are also welcomed!
