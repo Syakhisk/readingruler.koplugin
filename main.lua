@@ -222,9 +222,10 @@ function ReadingRuler:onReadingRulerResetPosition()
 
     logger.info("ReadingRuler: Reset position")
     if self._movable then
-        self._movable:setMovedOffset({ x = 0, y = 0 })
+        local first_line = #self:getTexts().sboxes > 0 and self:getTexts().sboxes[1]
+        local y = first_line and first_line.y + first_line.h or Screen:getHeight() * 0.5
 
-        UIManager:setDirty(self.view.dialog, "partial")
+        self:move(0, y)
     end
 end
 
@@ -315,7 +316,7 @@ function ReadingRuler:move(x, y)
 
         UIManager:setDirty("all", function()
             local update_region = orig_dimen:combine(self._movable.dimen)
-            logger.dbg("MovableContainer refresh region", update_region)
+            logger.dbg("ReadingRuler: refresh region", update_region)
             return "ui", update_region
         end)
     end
@@ -325,11 +326,11 @@ function ReadingRuler:getTexts(ignore_cache)
     local page = self.document:getCurrentPage()
 
     if not ignore_cache and self._cached_texts and self._cached_texts_page == page then
-        -- logger.info("ReadingRuler: cache hit")
+        logger.dbg("ReadingRuler: cache hit")
         return self._cached_texts
     end
 
-    -- logger.info("ReadingRuler: cache miss")
+    logger.dbg("ReadingRuler: cache miss")
 
     local texts = self.ui.document:getTextFromPositions(
         { x = 0, y = 0, page = page },
@@ -340,7 +341,7 @@ function ReadingRuler:getTexts(ignore_cache)
     self._cached_texts = texts
     self._cached_texts_page = page
 
-    return texts
+    return texts and texts or { sboxes = {} }
 end
 
 function ReadingRuler:getNearestTextPositions(y)
