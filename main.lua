@@ -298,9 +298,6 @@ function ReadingRuler:buildUI()
     self[1] = self._movable
 end
 
--- TODO: every movement should be done here,
---  and every x,y in the movement expect a line without container.
---  we should translate/transform the movement to compensate the container
 function ReadingRuler:move(x, y)
     if not self._enabled then
         self._enabled = true
@@ -308,10 +305,12 @@ function ReadingRuler:move(x, y)
         UIManager:setDirty(self.view.dialog, "partial")
     end
 
-    self._movable:setMovedOffset({ x = x, y = y })
+    local trans_y = y - self._touch_container.padding_top
+
+    self._movable:setMovedOffset({ x = x, y = trans_y })
 
     -- only set dirty if movable is already rendered previously
-    if self._movable ~= nil then
+    if self._movable ~= nil and self._movable.dimen ~= nil then
         local orig_dimen = self._movable.dimen:copy() -- dimen before move/paintTo
 
         UIManager:setDirty("all", function()
