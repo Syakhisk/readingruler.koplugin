@@ -2,12 +2,14 @@ local _ = require("gettext")
 local Blitbuffer = require("ffi/blitbuffer")
 local Device = require("device")
 local Dispatcher = require("dispatcher") -- luacheck:ignore
+local Font = require("ui/font")
+local FrameContainer = require("ui/widget/container/framecontainer")
 local Geom = require("ui/geometry")
 local GestureRange = require("ui/gesturerange")
 local InputContainer = require("ui/widget/container/inputcontainer")
 local LineWidget = require("ui/widget/linewidget")
 local MovableContainer = require("ui/widget/container/movablecontainer")
-local FrameContainer = require("ui/widget/container/framecontainer")
+local Notification = require("ui/widget/notification")
 local Screen = require("device").screen
 local UIManager = require("ui/uimanager")
 local logger = require("logger")
@@ -24,6 +26,8 @@ local ReadingRuler = InputContainer:extend({
     _movable = nil,
     _touch_container = nil,
     _line = nil,
+
+    _tap_to_move = false,
 
     _cached_texts = nil,
     _cached_texts_page = nil,
@@ -152,37 +156,66 @@ function ReadingRuler:onSwipe(_, ges)
     end
 end
 
-function ReadingRuler:onHold(_, ges)
+function ReadingRuler:onHold(_args, ges)
     if not self._enabled then
         return false
     end
 
-    if not ges.pos:intersectWith(self._movable.dimen) then
+    if not ges.pos:intersectWith(self._touch_container.dimen) then
         return false
     end
 
-    self._tap_to_move = true
+    if self._tap_to_move then
+        self._tap_to_move = false
+    else
+        self._tap_to_move = true
+        self:notifyTapToMove()
+    end
 
     -- trigger a repaint to show the dashed line
-    self:move(0, self._movable:getMovedOffset().y)
+    self:repaint()
 
     return true
 end
 
-function ReadingRuler:onTap(_, ges)
+function ReadingRuler:onTap(_args, ges)
     if not self._enabled then
         return false
     end
 
-    if not self._tap_to_move then
-        return false
+    local is_tapping_line = ges.pos:intersectWith(self._touch_container.dimen)
+
+    -- enter tap-to-move if user is tapping the line while not in the mode already
+    if not self._tap_to_move and is_tapping_line then
+        self._tap_to_move = true
+
+        self:repaint()
+        self:notifyTapToMove()
+
+        return true
     end
 
-    local positions = self:getNearestTextPositions(ges.pos.y)
-    self:move(0, positions.curr.y + positions.curr.h)
-    self._tap_to_move = false
+    -- exit tap-to-move if user is tapping the line while in the mode
+    if self._tap_to_move and is_tapping_line then
+        self._tap_to_move = false
 
-    return true
+        self:repaint()
+
+        return true
+    end
+
+    -- move the line to the tapped position and exit the mode
+    if self._tap_to_move then
+        local positions = self:getNearestTextPositions(ges.pos.y)
+        self:move(0, positions.curr.y + positions.curr.h)
+        self._tap_to_move = false
+
+        self:repaint()
+
+        return true
+    end
+
+    return false
 end
 
 function ReadingRuler:onPageUpdate(new_page)
@@ -284,7 +317,7 @@ function ReadingRuler:buildUI()
 
     self._touch_container = FrameContainer:new({
         color = Blitbuffer.gray(self._line_color_intensity),
-        bordersize = 1,
+        bordersize = 0,
         padding = 0,
         padding_top = screen_size.h * 0.01,
         padding_bottom = screen_size.h * 0.01,
@@ -306,10 +339,15 @@ function ReadingRuler:move(x, y)
         UIManager:setDirty(self.view.dialog, "partial")
     end
 
+    -- remove the top padding from container to get the correct y position of line
     local trans_y = y - self._touch_container.padding_top
 
     self._movable:setMovedOffset({ x = x, y = trans_y })
 
+    self:repaint()
+end
+
+function ReadingRuler:repaint()
     -- only set dirty if movable is already rendered previously
     if self._movable ~= nil and self._movable.dimen ~= nil then
         local orig_dimen = self._movable.dimen:copy() -- dimen before move/paintTo
@@ -367,6 +405,14 @@ function ReadingRuler:getNearestTextPositions(y)
     local next = nearest_idx and texts.sboxes[nearest_idx + 1] or nil
 
     return { prev = prev, curr = nearest_sbox, next = next }
+end
+
+function ReadingRuler:notifyTapToMove()
+    UIManager:show(Notification:new({
+        face = Font:getFace("xx_smallinfofont"),
+        text = _("Tap anywhere to move the reading ruler or tap again to exit."),
+        timeout = 3,
+    }))
 end
 
 return ReadingRuler
