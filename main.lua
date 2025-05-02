@@ -96,14 +96,19 @@ function ReadingRuler:addToMainMenu(menu_items)
 end
 
 function ReadingRuler:addToHighlightDialog()
-    self.ui.highlight:addToHighlightDialog("13_z_reading_ruler", function(this)
+    self.ui.highlight:addToHighlightDialog("13_z_reading_ruler", function(this, index)
         return {
             text = _("Move/show reading ruler here"),
             callback = function()
-                -- TODO: fix crash here if click on highlight
-                -- logger.info(this)
-                local sbox = this.selected_text.sboxes[#this.selected_text.sboxes]
-                self:move(0, sbox.y + sbox.h)
+                -- move the reading ruler to the selected position
+                if this.selected_text.sboxes ~= nil then
+                    local sbox = this.selected_text.sboxes[#this.selected_text.sboxes]
+                    self:move(0, sbox.y + sbox.h)
+                else -- if user is clickin on already highlighted text
+                    local pos = this:getHighlightVisibleBoxes(index)[1]
+                    self:move(0, pos.y + pos.h)
+                end
+
                 this:onClose()
             end,
         }
