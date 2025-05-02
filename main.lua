@@ -2,6 +2,7 @@ local _ = require("gettext")
 local Blitbuffer = require("ffi/blitbuffer")
 local Device = require("device")
 local Dispatcher = require("dispatcher") -- luacheck:ignore
+local Event = require("ui/event")
 local Font = require("ui/font")
 local FrameContainer = require("ui/widget/container/framecontainer")
 local Geom = require("ui/geometry")
@@ -145,7 +146,7 @@ function ReadingRuler:onSwipe(_, ges)
             return true
         else
             logger.info("ReadingRuler: end of page")
-            -- self.ui.document:gotoPage(self.document:getPageCount() - 1)
+            self.ui:handleEvent(Event:new("GotoViewRel", 1))
         end
     end
 
@@ -156,7 +157,7 @@ function ReadingRuler:onSwipe(_, ges)
             return true
         else
             logger.info("ReadingRuler: start of page")
-            -- self.ui.document:gotoPage(self.document:getPageCount() + 1)
+            self.ui:handleEvent(Event:new("GotoViewRel", -1))
         end
     end
 end
@@ -239,8 +240,6 @@ function ReadingRuler:onPageUpdate(new_page)
     local direction = new_page >= self._last_page and "next" or "prev"
     local is_jump = math.abs(new_page - self._last_page) > 1
     local idx = 1
-
-    logger.info("is_jump", is_jump, "direction", direction, "new_page", new_page, "last_page", self._last_page)
 
     if not is_jump and direction == "prev" then
         idx = #texts.sboxes
