@@ -1,3 +1,5 @@
+![cover](https://github.com/user-attachments/assets/e2d5d86d-3376-46a6-a265-9be218021b14)
+
 # Reading Ruler Plugin for KOReader
 
 The **Reading Ruler** plugin is a tool designed to enhance the reading experience on KOReader by providing a movable horizontal line that helps readers focus on specific lines of text. This is especially useful for individuals who prefer guided reading or have difficulty maintaining focus while reading.
@@ -9,6 +11,21 @@ The **Reading Ruler** plugin is a tool designed to enhance the reading experienc
 - **Swipe Navigation**: Use swipe gestures to move the ruler to the next or previous line of text.
 - **Automatic Page Navigation**: Automatically navigate to the next or previous page when reaching the end of the current page.
 - **Reset Position**: Easily reset the ruler to its default position.
+
+## Preview
+<table>
+   <tr>
+      <td>
+         <img src="https://github.com/user-attachments/assets/66661951-c5b5-4d9c-9c4c-c1817570c885">
+      </td>
+      <td>
+         <img src="https://github.com/user-attachments/assets/2695732c-c366-489e-af21-fa4b278fdf7c">
+      </td>
+      <td>
+         <img src="https://github.com/user-attachments/assets/22dce65c-4285-4dd8-a49e-25855838a3ac">
+      </td>
+   </tr>
+</table>
 
 ## How It Works
 
