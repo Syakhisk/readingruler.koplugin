@@ -13,6 +13,7 @@ The **Reading Ruler** plugin is a tool designed to enhance the reading experienc
 - **Reset Position**: Easily reset the ruler to its default position.
 
 ## Preview
+
 <table>
    <tr>
       <td>
@@ -49,10 +50,16 @@ Some features of this plugin may not work as expected in two columns mode, this 
 - Swipe navigation on page start/end will not move to next/previous page.
 - The ruler may jump further than expected if the left and right columns texts are not aligned.
 
-## Possible improvements
-
-- Add option to disable default gestures and make user create custom KOReader gestures for the plugin.
-
 ## Contributions
 
 I have been using this plugin myself, and as of now, I don't need any additional features. However, I am open to feature requests to improve the plugin. Pull requests are also welcomed!
+
+## Possible improvements (TODO)
+
+- [ ] Add option to use:
+  - Swipe mode
+  - Tap mode
+  - Disable default gestures (create event for navigation)
+- [ ] Ignore screen edges for swipe mode
+- [ ] Support two columns
+- [ ] Support continuous view mode
