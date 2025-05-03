@@ -268,17 +268,27 @@ function ReadingRuler:onReadingRulerResetPosition()
 end
 
 function ReadingRuler:onReadingRulerSetState(state)
-    logger.info("ReadingRuler: Set state to ", state)
+    logger.dbg("ReadingRuler: Set state to ", state)
     self._enabled = state
 
     UIManager:setDirty(self.view.dialog, "partial")
 end
 
 function ReadingRuler:onReadingRulerToggle()
-    logger.info("ReadingRuler: Toggle to ", not self._enabled)
+    logger.dbg("ReadingRuler: Toggle to ", not self._enabled)
     self._enabled = not self._enabled
 
     UIManager:setDirty(self.view.dialog, "partial")
+end
+
+function ReadingRuler:onReadingRulerMoveToNextLine()
+    logger.dbg("ReadingRuler: Move to next line")
+    self:moveToNextLine()
+end
+
+function ReadingRuler:onReadingRulerMoveToPreviousLine()
+    logger.dbg("ReadingRuler: Move to previous line")
+    self:moveToPreviousLine()
 end
 
 -- Custom fns
@@ -303,6 +313,20 @@ function ReadingRuler:onDispatcherRegisterActions()
         category = "none",
         event = "ReadingRulerResetPosition",
         title = _("Reading Ruler: Reset position"),
+        general = true,
+    })
+
+    Dispatcher:registerAction("reading_ruler_move_to_next_line", {
+        category = "none",
+        event = "ReadingRulerMoveToNextLine",
+        title = _("Reading Ruler: Move to next line"),
+        general = true,
+    })
+
+    Dispatcher:registerAction("reading_ruler_move_to_previous_line", {
+        category = "none",
+        event = "ReadingRulerMoveToPreviousLine",
+        title = _("Reading Ruler: Move to previous line"),
         general = true,
     })
 end
