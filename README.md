@@ -60,6 +60,7 @@ I have been using this plugin myself, and as of now, I don't need any additional
   - Swipe mode
   - Tap mode
   - Disable default gestures (create event for navigation)
+- [ ] Customize line thickness / width
 - [ ] Ignore screen edges for swipe mode
 - [ ] Support two columns
 - [ ] Support continuous view mode

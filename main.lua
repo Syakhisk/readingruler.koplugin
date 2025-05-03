@@ -30,6 +30,10 @@ local ReadingRuler = InputContainer:extend({
 
     _tap_to_move = false,
 
+    _navigation_swipe_enabled = true,
+    _navgation_tap_enabled = false,
+    _navigation_disable_default = false,
+
     _cached_texts = nil,
     _cached_texts_page = nil,
     _last_page = 0,
@@ -83,6 +87,41 @@ function ReadingRuler:addToMainMenu(menu_items)
                     UIManager:setDirty(self.view.dialog, "partial")
                     return true
                 end,
+                separator = true,
+            },
+            {
+                text = _("Move with swipe"),
+                enabled_func = function()
+                    return not self._navigation_disable_default
+                end,
+                checked_func = function()
+                    return self._navigation_swipe_enabled
+                end,
+                callback = function()
+                    self._navigation_swipe_enabled = not self._navigation_swipe_enabled
+                end,
+            },
+            {
+                text = _("Move with tap"),
+                enabled_func = function()
+                    return not self._navigation_disable_default
+                end,
+                checked_func = function()
+                    return self._navgation_tap_enabled
+                end,
+                callback = function()
+                    self._navgation_tap_enabled = not self._navgation_tap_enabled
+                end,
+            },
+            {
+                text = _("Disable default move navigation"),
+                callback = function()
+                    self:menuToggleDisableDefaultNavigation()
+                end,
+                checked_func = function()
+                    return self._navigation_disable_default
+                end,
+                separator = true,
             },
             {
                 text = _("Reset Position"),
@@ -126,6 +165,10 @@ end
 function ReadingRuler:onSwipe(_, ges)
     if not self._enabled then
         return false
+    end
+
+    if not self._navigation_swipe_enabled then
+        return
     end
 
     if ges.direction == "south" then
@@ -442,6 +485,19 @@ function ReadingRuler:notifyTapToMove()
         text = _("Tap anywhere to move the reading ruler or tap again to exit."),
         timeout = 3,
     }))
+end
+
+function ReadingRuler:menuToggleDisableDefaultNavigation()
+    self._navigation_disable_default = not self._navigation_disable_default
+
+    if self._navigation_disable_default then
+        self._navigation_swipe_enabled = false
+        self._navgation_tap_enabled = false
+    else
+        self._navigation_swipe_enabled = true
+    end
+
+    -- UIManager:setDirty(self.view.dialog, "partial")
 end
 
 return ReadingRuler
