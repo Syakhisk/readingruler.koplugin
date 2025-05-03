@@ -31,7 +31,7 @@ local ReadingRuler = InputContainer:extend({
     _tap_to_move = false,
 
     _navigation_swipe_enabled = true,
-    _navgation_tap_enabled = false,
+    _navigation_tap_enabled = false,
     _navigation_disable_default = false,
 
     _cached_texts = nil,
@@ -107,10 +107,10 @@ function ReadingRuler:addToMainMenu(menu_items)
                     return not self._navigation_disable_default
                 end,
                 checked_func = function()
-                    return self._navgation_tap_enabled
+                    return self._navigation_tap_enabled
                 end,
                 callback = function()
-                    self._navgation_tap_enabled = not self._navgation_tap_enabled
+                    self._navigation_tap_enabled = not self._navigation_tap_enabled
                 end,
             },
             {
@@ -195,6 +195,16 @@ function ReadingRuler:onTap(_, ges)
         return false
     end
 
+    if self._navigation_tap_enabled then
+        if ges.pos.y < self._touch_container.dimen.y then
+            return self:moveToPreviousLine()
+        end
+
+        if ges.pos.y > self._touch_container.dimen.y + self._touch_container.dimen.h then
+            return self:moveToNextLine()
+        end
+    end
+
     local is_tapping_line = ges.pos:intersectWith(self._touch_container.dimen)
 
     if not self._tap_to_move and is_tapping_line then
@@ -215,7 +225,7 @@ function ReadingRuler:moveToNextLine()
         return true
     else
         self.ui:handleEvent(Event:new("GotoViewRel", 1))
-        return false
+        return true
     end
 end
 
@@ -226,7 +236,7 @@ function ReadingRuler:moveToPreviousLine()
         return true
     else
         self.ui:handleEvent(Event:new("GotoViewRel", -1))
-        return false
+        return true
     end
 end
 
@@ -492,7 +502,7 @@ function ReadingRuler:menuToggleDisableDefaultNavigation()
 
     if self._navigation_disable_default then
         self._navigation_swipe_enabled = false
-        self._navgation_tap_enabled = false
+        self._navigation_tap_enabled = false
     else
         self._navigation_swipe_enabled = true
     end

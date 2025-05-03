@@ -56,11 +56,11 @@ I have been using this plugin myself, and as of now, I don't need any additional
 
 ## Possible improvements (TODO)
 
-- [ ] Add option to use:
+- [x] Add option to use:
   - Swipe mode
   - Tap mode
   - Disable default gestures (create event for navigation)
 - [ ] Customize line thickness / width
 - [ ] Ignore screen edges for swipe mode
 - [ ] Support two columns
-- [ ] Support continuous view mode
+- [ ] Support continuous/scroll view mode
