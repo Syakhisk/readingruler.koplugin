@@ -222,12 +222,14 @@ function ReadingRuler:moveToTappedPosition(y)
 end
 
 function ReadingRuler:onPageUpdate(new_page)
-    -- TODO: make sure this doesn't force full page redraw
-
     if not self._enabled then
         return
     end
 
+    self:updateLinePosition(new_page)
+end
+
+function ReadingRuler:updateLinePosition(new_page)
     local texts = self:getTexts(true)
 
     if #texts.sboxes < 1 then
@@ -236,14 +238,13 @@ function ReadingRuler:onPageUpdate(new_page)
 
     local direction = new_page >= self._last_page and "next" or "prev"
     local is_jump = math.abs(new_page - self._last_page) > 1
-    local idx = 1
 
+    local idx = 1
     if not is_jump and direction == "prev" then
         idx = #texts.sboxes
     end
 
     local y = texts.sboxes[idx].y + texts.sboxes[idx].h
-
     self:move(0, y)
 
     self._last_page = new_page
