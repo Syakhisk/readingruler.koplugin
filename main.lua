@@ -120,12 +120,6 @@ function ReadingRuler:paintTo(bb, x, y)
         return
     end
 
-    if self._tap_to_move then
-        self._line.style = "dashed"
-    else
-        self._line.style = "solid"
-    end
-
     InputContainer.paintTo(self, bb, x, y)
 end
 
@@ -194,30 +188,39 @@ function ReadingRuler:moveToPreviousLine()
 end
 
 function ReadingRuler:toggleTapToMove()
-    self._tap_to_move = not self._tap_to_move
-    self:notifyTapToMove()
-    self:repaint()
-    return true
+    if not self._tap_to_move then
+        return self:enterTapToMoveMode()
+    else
+        return self:exitTapToMoveMode()
+    end
 end
 
 function ReadingRuler:enterTapToMoveMode()
     self._tap_to_move = true
-    self:repaint()
+    self._line.style = "dashed"
+
     self:notifyTapToMove()
+
+    self:repaint()
+
     return true
 end
 
 function ReadingRuler:exitTapToMoveMode()
     self._tap_to_move = false
+    self._line.style = "solid"
+
     self:repaint()
+
     return true
 end
 
 function ReadingRuler:moveToTappedPosition(y)
     local positions = self:getNearestTextPositions(y)
     self:move(0, positions.curr.y + positions.curr.h)
-    self._tap_to_move = false
-    self:repaint()
+
+    self:exitTapToMoveMode()
+
     return true
 end
 
