@@ -387,6 +387,12 @@ end
 function ReadingRuler:buildUI()
     local screen_size = Screen:getSize()
 
+    -- local margins = self.ui.document.configurable.h_page_margins[1] + self.ui.document.configurable.h_page_margins[2]
+    -- local two_column_mode = self.ui.document.configurable.visible_pages == 2
+    -- local effective_width = two_column_mode and (screen_size.w - margins) / 2 or screen_size.w - margins
+    --
+    -- logger.info("margins", margins, "\neffective_width", effective_width, "\ntwo_column_mode", two_column_mode)
+
     self.dimen = Geom:new({ x = 0, y = 0, w = screen_size.w, h = screen_size.h })
 
     local width = screen_size.w
