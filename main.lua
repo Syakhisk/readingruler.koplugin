@@ -35,7 +35,6 @@ local ReadingRuler = InputContainer:extend({
     _last_page = 0,
 
     _ignore_events = {
-        -- handle these events ourselves (to call the movablecontainer)
         "hold",
         "hold_release",
         "hold_pan",
@@ -131,38 +130,18 @@ function ReadingRuler:paintTo(bb, x, y)
 end
 
 function ReadingRuler:onSwipe(_, ges)
-    -- TODO: ignore swipe on screen edges
-
     if not self._enabled then
         return false
     end
 
-    local positions = self:getNearestTextPositions()
-
     if ges.direction == "south" then
-        if positions.next then
-            -- logger.info("ReadingRuler: move down")
-            self:move(0, positions.next.y + positions.next.h)
-            return true
-        else
-            logger.info("ReadingRuler: end of page")
-            self.ui:handleEvent(Event:new("GotoViewRel", 1))
-        end
-    end
-
-    if ges.direction == "north" then
-        if positions.prev then
-            -- logger.info("ReadingRuler: move up")
-            self:move(0, positions.prev.y + positions.prev.h)
-            return true
-        else
-            logger.info("ReadingRuler: start of page")
-            self.ui:handleEvent(Event:new("GotoViewRel", -1))
-        end
+        return self:moveToNextLine()
+    elseif ges.direction == "north" then
+        return self:moveToPreviousLine()
     end
 end
 
-function ReadingRuler:onHold(_args, ges)
+function ReadingRuler:onHold(_, ges)
     if not self._enabled then
         return false
     end
@@ -171,57 +150,75 @@ function ReadingRuler:onHold(_args, ges)
         return false
     end
 
-    if self._tap_to_move then
-        self._tap_to_move = false
-    else
-        self._tap_to_move = true
-        self:notifyTapToMove()
-    end
-
-    -- trigger a repaint to show the dashed line
-    self:repaint()
-
-    return true
+    return self:toggleTapToMove()
 end
 
-function ReadingRuler:onTap(_args, ges)
+function ReadingRuler:onTap(_, ges)
     if not self._enabled then
         return false
     end
 
     local is_tapping_line = ges.pos:intersectWith(self._touch_container.dimen)
 
-    -- enter tap-to-move if user is tapping the line while not in the mode already
     if not self._tap_to_move and is_tapping_line then
-        self._tap_to_move = true
-
-        self:repaint()
-        self:notifyTapToMove()
-
-        return true
-    end
-
-    -- exit tap-to-move if user is tapping the line while in the mode
-    if self._tap_to_move and is_tapping_line then
-        self._tap_to_move = false
-
-        self:repaint()
-
-        return true
-    end
-
-    -- move the line to the tapped position and exit the mode
-    if self._tap_to_move then
-        local positions = self:getNearestTextPositions(ges.pos.y)
-        self:move(0, positions.curr.y + positions.curr.h)
-        self._tap_to_move = false
-
-        self:repaint()
-
-        return true
+        return self:enterTapToMoveMode()
+    elseif self._tap_to_move and is_tapping_line then
+        return self:exitTapToMoveMode()
+    elseif self._tap_to_move then
+        return self:moveToTappedPosition(ges.pos.y)
     end
 
     return false
+end
+
+function ReadingRuler:moveToNextLine()
+    local positions = self:getNearestTextPositions()
+    if positions.next then
+        self:move(0, positions.next.y + positions.next.h)
+        return true
+    else
+        self.ui:handleEvent(Event:new("GotoViewRel", 1))
+        return false
+    end
+end
+
+function ReadingRuler:moveToPreviousLine()
+    local positions = self:getNearestTextPositions()
+    if positions.prev then
+        self:move(0, positions.prev.y + positions.prev.h)
+        return true
+    else
+        self.ui:handleEvent(Event:new("GotoViewRel", -1))
+        return false
+    end
+end
+
+function ReadingRuler:toggleTapToMove()
+    self._tap_to_move = not self._tap_to_move
+    self:notifyTapToMove()
+    self:repaint()
+    return true
+end
+
+function ReadingRuler:enterTapToMoveMode()
+    self._tap_to_move = true
+    self:repaint()
+    self:notifyTapToMove()
+    return true
+end
+
+function ReadingRuler:exitTapToMoveMode()
+    self._tap_to_move = false
+    self:repaint()
+    return true
+end
+
+function ReadingRuler:moveToTappedPosition(y)
+    local positions = self:getNearestTextPositions(y)
+    self:move(0, positions.curr.y + positions.curr.h)
+    self._tap_to_move = false
+    self:repaint()
+    return true
 end
 
 function ReadingRuler:onPageUpdate(new_page)
