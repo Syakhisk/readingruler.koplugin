@@ -13,6 +13,7 @@ The **Reading Ruler** plugin is a tool designed to enhance the reading experienc
 - **Reset Position**: Easily reset the ruler to its default position.
 
 ## Preview
+
 <table>
    <tr>
       <td>
@@ -34,11 +35,14 @@ The **Reading Ruler** plugin is a tool designed to enhance the reading experienc
 
    - Swipe up or down to navigate between lines.
    - Use tap-to-move mode to reposition the ruler by tap/hold the ruler and then tap on the desired location.
+   - Use custom gestures
 
 ## Installation
 
-1. Copy the `readingruler.koplugin` folder into the `plugins` directory of your KOReader installation.
-2. Restart KOReader to load the plugin.
+1. Download this repository
+2. Rename the folder to `readingruler.koplugin` (remove `-master` from the folder name).
+3. Copy the `readingruler.koplugin` folder into the `plugins` directory of your KOReader installation.
+4. Restart KOReader to load the plugin.
 
 ## Known Issues
 
@@ -49,10 +53,22 @@ Some features of this plugin may not work as expected in two columns mode, this 
 - Swipe navigation on page start/end will not move to next/previous page.
 - The ruler may jump further than expected if the left and right columns texts are not aligned.
 
-## Possible improvements
-
-- Add option to disable default gestures and make user create custom KOReader gestures for the plugin.
-
 ## Contributions
 
 I have been using this plugin myself, and as of now, I don't need any additional features. However, I am open to feature requests to improve the plugin. Pull requests are also welcomed!
+
+## Possible improvements
+
+TODO:
+
+- [ ] Support two columns
+- [ ] Support continuous/scroll view mode
+
+DONE:
+
+- [x] Add option to use:
+  - [x] Swipe mode
+  - [x] Tap mode
+  - [x] Disable default gestures (create event for navigation)
+- [x] Customize line thickness / width
+- [x] Ignore screen edges for swipe mode
