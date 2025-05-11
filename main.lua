@@ -20,7 +20,7 @@ local ReadingRuler = InputContainer:extend({
 function ReadingRuler:init()
     logger.info("--- ReadingRuler init ---")
 
-    -- Initialize components
+    -- Initialize components --
     self.settings = Settings:new()
 
     self.ruler = Ruler:new({
@@ -50,11 +50,11 @@ function ReadingRuler:init()
     -- Register to UIManager
     self.view:registerViewModule("reading_ruler", self)
 
-    -- Set up gesture events
-    self:setupGestures()
+    -- Register gesture events so we can handle them
+    self:registerGestures()
 
     -- Register actions (custom gesture by user)
-    self:onDispatcherRegisterActions()
+    self:registerActions()
 
     -- Initialize UI if enabled
     if self.settings:isEnabled() then
@@ -63,8 +63,40 @@ function ReadingRuler:init()
     end
 end
 
-function ReadingRuler:onDispatcherRegisterActions()
-    -- Register line navigation actions
+-- Register gestures, define the zones that we want to listen to
+function ReadingRuler:registerGestures()
+    local screen = Screen:getSize()
+    local offset_ratio = 0.125
+    local offset_ratio_end = 1 - offset_ratio * 2
+
+    -- Set up gesture ranges for different parts of the screen
+    if Device:isTouchDevice() then
+        local range = Geom:new({
+            x = offset_ratio * screen.w,
+            y = offset_ratio * screen.h,
+            w = offset_ratio_end * Screen:getWidth(),
+            h = offset_ratio_end * Screen:getHeight(),
+        })
+
+        self.ges_events = {
+            Tap = {
+                GestureRange:new({
+                    ges = "tap",
+                    range = range,
+                }),
+            },
+            Swipe = {
+                GestureRange:new({
+                    ges = "swipe",
+                    range = range,
+                }),
+            },
+        }
+    end
+end
+
+-- Register actions so that user can bind them to gestures
+function ReadingRuler:registerActions()
     Dispatcher:registerAction("reading_ruler_move_to_next_line", {
         category = "none",
         event = "ReadingRulerMoveToNextLine",
@@ -97,37 +129,6 @@ function ReadingRuler:onDispatcherRegisterActions()
     })
 end
 
-function ReadingRuler:setupGestures()
-    local screen = Screen:getSize()
-    local offset_ratio = 0.125
-    local offset_ratio_end = 1 - offset_ratio * 2
-
-    -- Set up gesture ranges for different parts of the screen
-    if Device:isTouchDevice() then
-        local range = Geom:new({
-            x = offset_ratio * screen.w,
-            y = offset_ratio * screen.h,
-            w = offset_ratio_end * Screen:getWidth(),
-            h = offset_ratio_end * Screen:getHeight(),
-        })
-
-        self.ges_events = {
-            Tap = {
-                GestureRange:new({
-                    ges = "tap",
-                    range = range,
-                }),
-            },
-            Swipe = {
-                GestureRange:new({
-                    ges = "swipe",
-                    range = range,
-                }),
-            },
-        }
-    end
-end
-
 function ReadingRuler:addToMainMenu(menu_items)
     self.menu:addToMainMenu(menu_items)
 end
@@ -136,20 +137,16 @@ function ReadingRuler:paintTo(bb, x, y)
     self.ruler_ui:paintTo(bb, x, y)
 end
 
+-- Document Events --
 function ReadingRuler:onPageUpdate(new_page)
     logger.info("--- ReadingRuler:onPageUpdate ---")
     return self.ruler_ui:onPageUpdate(new_page)
 end
 
--- Forward events to UI component
+-- Gesture Events --
 function ReadingRuler:onSwipe(arg, ges)
     logger.info("--- ReadingRuler:onSwipe ---")
     return self.ruler_ui:onSwipe(arg, ges)
-end
-
-function ReadingRuler:onHold(arg, ges)
-    logger.info("--- ReadingRuler:onHold ---")
-    return self.ruler_ui:onHold(arg, ges)
 end
 
 function ReadingRuler:onTap(arg, ges)
@@ -157,6 +154,7 @@ function ReadingRuler:onTap(arg, ges)
     return self.ruler_ui:onTap(arg, ges)
 end
 
+-- Custom Events (Actions) --
 function ReadingRuler:onReadingRulerMoveToNextLine()
     logger.info("--- ReadingRulerMoveToNextLine ---")
     self.ruler_ui:handleLineNavigation("next")
