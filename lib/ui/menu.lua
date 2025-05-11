@@ -3,18 +3,16 @@ local Menu = {}
 local UIManager = require("ui/uimanager")
 local Notification = require("ui/widget/notification")
 local SpinWidget = require("ui/widget/spinwidget")
-local logger = require("logger")
 
-function Menu:new(o)
-    o = o or {}
+function Menu:new(args)
+    local o = {}
     setmetatable(o, self)
     self.__index = self
 
-    -- Dependencies
-    o.settings = o.settings
-    o.ruler = o.ruler
-    o.ruler_ui = o.ruler_ui
-    o.ui = o.ui
+    o.settings = args.settings
+    o.ruler = args.ruler
+    o.ruler_ui = args.ruler_ui
+    o.ui = args.ui
 
     return o
 end
