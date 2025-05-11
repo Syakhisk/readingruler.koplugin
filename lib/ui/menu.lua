@@ -1,7 +1,6 @@
 local _ = require("gettext")
 local Menu = {}
 local UIManager = require("ui/uimanager")
-local Notification = require("ui/widget/notification")
 local SpinWidget = require("ui/widget/spinwidget")
 
 function Menu:new(args)
@@ -17,8 +16,8 @@ function Menu:new(args)
     return o
 end
 
+-- Add main entry for ReadingRuler in KOReader's menu
 function Menu:addToMainMenu(menu_items)
-    -- Add main entry for ReadingRuler in KOReader's menu
     menu_items.reading_ruler = {
         text = _("Reading Ruler"),
         sub_item_table = {

@@ -58,8 +58,8 @@ end
 -- @see RulerUI:setEnabled to see the flow of how the UI is built and drawn.
 function RulerUI:buildUI()
     -- Create or update the ruler line widget
-    local line_props = self.ruler:getLineProperties()
-    local geom = self.ruler:getLineGeometry()
+    local line_props = self.ruler:getRulerProperties()
+    local geom = self.ruler:getRulerGeometry()
 
     -- Create line widget
     self.ruler_widget = LineWidget:new({
@@ -84,7 +84,7 @@ end
 
 -- Set positions and styling of the ruler, and repaint the UI to reflect changes.
 function RulerUI:updateUI()
-    local geom = self.ruler:getLineGeometry()
+    local geom = self.ruler:getRulerGeometry()
 
     -- remove the top padding from container to get the correct y position of line.
     local trans_y = geom.y - self.touch_container_widget.padding_top
@@ -94,7 +94,7 @@ function RulerUI:updateUI()
         self.movable_widget:setMovedOffset({ x = geom.x, y = trans_y })
     end
 
-    local line_props = self.ruler:getLineProperties()
+    local line_props = self.ruler:getRulerProperties()
     self.ruler_widget.background = line_props.color
     self.ruler_widget.style = line_props.style
     self.ruler_widget.dimen.h = line_props.thickness

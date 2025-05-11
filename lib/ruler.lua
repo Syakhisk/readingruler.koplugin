@@ -28,20 +28,6 @@ function Ruler:new(o)
     return o
 end
 
-function Ruler:isTapToMoveMode()
-    return self.tap_to_move
-end
-
-function Ruler:enterTapToMoveMode()
-    self.tap_to_move = true
-    self.line_style = "dashed"
-end
-
-function Ruler:exitTapToMoveMode()
-    self.tap_to_move = false
-    self.line_style = "solid"
-end
-
 function Ruler:setInitialPositionOnPage(new_page)
     local texts = self:getTexts()
     if #texts.sboxes < 1 then
@@ -101,6 +87,7 @@ function Ruler:move(x, y)
 end
 
 --- Get nearest text boxes from a given `y`, if `y` is nil, use the current line position.
+--- This function is used to find the nearest text boxes above and below the current line.
 ---@param y? number
 ---@return table
 function Ruler:getNearestTextPositions(y)
@@ -137,6 +124,9 @@ function Ruler:getNearestTextPositions(y)
     return { prev = prev, curr = nearest_sbox, next = next }
 end
 
+-- Get the textboxes (dimen) of texts on the current page
+---@param ignore_cache? boolean
+---@return table
 function Ruler:getTexts(ignore_cache)
     local page = self.document:getCurrentPage()
 
@@ -160,7 +150,8 @@ function Ruler:getTexts(ignore_cache)
     return texts and texts or { sboxes = {} }
 end
 
-function Ruler:getLineProperties()
+-- Get ruler properties and geometry --
+function Ruler:getRulerProperties()
     return {
         thickness = self.settings:get("line_thickness"),
         style = self.line_style,
@@ -168,8 +159,7 @@ function Ruler:getLineProperties()
     }
 end
 
-function Ruler:getLineGeometry()
-    -- Return the geometry for drawing the line
+function Ruler:getRulerGeometry()
     return {
         x = self.current_line_x,
         y = self.current_line_y,
@@ -178,6 +168,22 @@ function Ruler:getLineGeometry()
     }
 end
 
+-- Tap to move mode handling --
+function Ruler:isTapToMoveMode()
+    return self.tap_to_move
+end
+
+function Ruler:enterTapToMoveMode()
+    self.tap_to_move = true
+    self.line_style = "dashed"
+end
+
+function Ruler:exitTapToMoveMode()
+    self.tap_to_move = false
+    self.line_style = "solid"
+end
+
+-- Debugging functions --
 function Ruler:__printTextFromSbox(sbox)
     local page = self.document:getCurrentPage()
 
