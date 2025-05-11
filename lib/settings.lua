@@ -1,6 +1,5 @@
 local DataStorage = require("datastorage")
 local LuaSettings = require("luasettings")
-local Device = require("device")
 local logger = require("logger")
 
 -- Constants for settings
@@ -8,7 +7,6 @@ local SETTINGS_FILE = DataStorage:getSettingsDir() .. "/readingruler_settings.lu
 local DEFAULTS = {
     enabled = false,
     line_thickness = 2,
-    -- TODO: use blitbuffer and use intensity instead of color here
     line_intensity = 0.7,
     line_style = "solid", -- solid, dashed, dotted
     follow_mode = "tap", -- tap, swipe, hold

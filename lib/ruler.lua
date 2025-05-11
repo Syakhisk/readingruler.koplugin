@@ -1,4 +1,3 @@
-local Geom = require("ui/geometry")
 local Blitbuffer = require("ffi/blitbuffer")
 local Device = require("device")
 local logger = require("logger")
@@ -19,68 +18,114 @@ function Ruler:new(o)
     -- State
     o.position = o.settings:get("position") -- position as percentage of screen height
     o.current_line_y = nil
+    o.current_line_x = nil
     o.screen_height = Device.screen:getHeight()
     o.screen_width = Device.screen:getWidth()
-
-    -- Initialize
-    o:init()
+    o.cached_texts = nil
+    o.cached_texts_page = nil
+    o.last_page = 0
 
     return o
 end
 
-function Ruler:init()
-    -- Initial position calculation
-    self:calculateDefaultPosition()
-end
-
-function Ruler:calculateDefaultPosition()
-    -- Default to the position set in settings (percentage of screen height)
-    local position_percentage = self.settings:get("position")
-    self.current_line_y = math.floor(self.screen_height * position_percentage)
-
-    return self.current_line_y
-end
-
-function Ruler:getCurrentPosition()
-    return self.current_line_y
-end
-
-function Ruler:setPosition(y_position)
-    -- Ensure the ruler stays within screen bounds
-    if y_position < 0 then
-        y_position = 0
-    elseif y_position > self.screen_height then
-        y_position = self.screen_height
+function Ruler:onPageUpdate(new_page)
+    local texts = self:getTexts()
+    if #texts.sboxes < 1 then
+        return
     end
 
-    self.current_line_y = y_position
+    -- page change direction.
+    local direction = new_page >= self.last_page and "next" or "prev"
 
-    -- Save position as percentage for persistence across different screen sizes
-    self.position = y_position / self.screen_height
-    self.settings:set("position", self.position)
+    -- check if the page jump is more than 1 page.
+    local is_jump = math.abs(new_page - self.last_page) > 1
 
-    return self.current_line_y
+    -- start at first line, if move to previous page, set to last line.
+    -- if jump, set to first line.
+    local line = 1
+    if not is_jump and direction == "prev" then
+        line = #texts.sboxes
+    end
+
+    self:move(0, texts.sboxes[line].y + texts.sboxes[line].h)
+    self.last_page = new_page
 end
 
-function Ruler:moveUp(step)
-    step = step or 5
-    return self:setPosition(self.current_line_y - step)
+--- Move the ruler to next line
+---@return boolean
+function Ruler:moveToNextLine()
+    local positions = self:getNearestTextPositions()
+    if positions.next then
+        self:move(0, positions.next.y + positions.next.h)
+        return true
+    end
+
+    return false
 end
 
-function Ruler:moveDown(step)
-    step = step or 5
-    return self:setPosition(self.current_line_y + step)
+function Ruler:moveToPreviousLine()
+    local positions = self:getNearestTextPositions()
+    if positions.prev then
+        self:move(0, positions.prev.y + positions.prev.h)
+        return true
+    end
+
+    return false
 end
 
-function Ruler:updateLinePosition(page)
-    -- This would be called when the page changes
-    -- Placeholder for future logic to adjust ruler position based on page content
-    -- For now, just maintaining the current relative position
+function Ruler:move(x, y)
+    self.current_line_y = y
+    self.current_line_x = x
+end
 
-    -- If we want to find the nearest text line, we could do that here
-    -- using the document and view APIs
+--- Get nearest text boxes from a given `y`, if `y` is nil, use the current line position.
+---@param y? number
+---@return table
+function Ruler:getNearestTextPositions(y)
+    if y == nil then
+        y = self.current_line_y
+    end
 
-    return self:calculateDefaultPosition()
+    local texts = self:getTexts()
+
+    local nearest_idx, nearest_sbox = nil, nil
+    local min_distance = math.huge
+
+    for i, sbox in ipairs(texts.sboxes) do
+        local distance = math.abs(sbox.y + sbox.h - y)
+        if distance < min_distance then
+            min_distance = distance
+            nearest_idx = i
+            nearest_sbox = sbox
+        end
+    end
+
+    local prev = nearest_idx and texts.sboxes[nearest_idx - 1] or nil
+    local next = nearest_idx and texts.sboxes[nearest_idx + 1] or nil
+
+    return { prev = prev, curr = nearest_sbox, next = next }
+end
+
+function Ruler:getTexts(ignore_cache)
+    local page = self.document:getCurrentPage()
+
+    if not ignore_cache and self.cached_texts and self.cached_texts_page == page then
+        logger.info("Ruler: cache hit")
+        return self.cached_texts
+    end
+
+    logger.info("Ruler: cache miss")
+
+    local texts = self.ui.document:getTextFromPositions(
+        { x = 0, y = 0, page = page },
+        { x = self.screen_width, y = self.screen_width },
+        true
+    )
+
+    self.cached_texts = texts
+    self.cached_texts_page = page
+
+    return texts and texts or { sboxes = {} }
 end
 
 function Ruler:getLineProperties()
@@ -94,7 +139,7 @@ end
 function Ruler:getLineGeometry()
     -- Return the geometry for drawing the line
     return {
-        x = 0,
+        x = self.current_line_x,
         y = self.current_line_y,
         w = self.screen_width,
         h = self.settings:get("line_thickness"),

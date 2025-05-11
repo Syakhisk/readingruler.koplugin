@@ -56,10 +56,6 @@ function ReadingRuler:addToMainMenu(menu_items)
 end
 
 function ReadingRuler:paintTo(bb, x, y)
-    if not self.settings:isEnabled() then
-        return
-    end
-
     self.ruler_ui:paintTo(bb, x, y)
 end
 

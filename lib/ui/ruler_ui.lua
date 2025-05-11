@@ -128,9 +128,6 @@ function RulerUI:buildUI()
         ignore_events = ignore_events,
         self.touch_container_widget,
     })
-
-    -- Make ruler visible
-    self:show()
 end
 
 function RulerUI:updateUI()
@@ -145,17 +142,11 @@ function RulerUI:updateUI()
     end
 end
 
-function RulerUI:show()
-    -- Show the ruler if not already visible
-    if not self.is_visible and self.movable_widget then
-        UIManager:setDirty(nil, function()
-            return "ui", self.movable_widget.dimen
-        end)
-        self.is_visible = true
-    end
-end
-
 function RulerUI:paintTo(bb, x, y)
+    if not self.settings:isEnabled() then
+        return
+    end
+
     -- Paint the ruler widget to the screen
     if self.movable_widget then
         logger.info("--- RulerUI:paintTo")
@@ -186,7 +177,7 @@ function RulerUI:displayNotification(text)
 end
 
 function RulerUI:onPageUpdate(new_page)
-    self.ruler:updateLinePosition(new_page)
+    self.ruler:onPageUpdate(new_page)
 end
 
 -- Gesture handling
