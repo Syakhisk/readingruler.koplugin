@@ -40,6 +40,13 @@ function Menu:addToMainMenu(menu_items)
                 end,
             },
             {
+                text = _("Line intensity"),
+                keep_menu_open = true,
+                callback = function()
+                    self:showLineIntensityDialog()
+                end,
+            },
+            {
                 text = _("Follow mode"),
                 keep_menu_open = true,
                 sub_item_table = {
@@ -89,6 +96,28 @@ function Menu:showLineThicknessDialog()
         ok_text = _("Set thickness"),
         callback = function(new_thickness)
             self.settings:set("line_thickness", new_thickness.value)
+
+            if self.settings:isEnabled() then
+                self.ruler_ui:updateUI()
+            end
+        end,
+    })
+
+    UIManager:show(spin_widget)
+end
+
+function Menu:showLineIntensityDialog()
+    local spin_widget = SpinWidget:new({
+        value = self.settings:get("line_intensity"),
+        value_min = 0,
+        value_max = 1,
+        value_step = 0.1,
+        value_hold_step = 0.5,
+        precision = "%.2f",
+        title_text = _("Line intensity"),
+        ok_text = _("Set intensity"),
+        callback = function(new_intensity)
+            self.settings:set("line_intensity", new_intensity.value)
 
             if self.settings:isEnabled() then
                 self.ruler_ui:updateUI()

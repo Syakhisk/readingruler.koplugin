@@ -10,7 +10,6 @@ local DEFAULTS = {
     line_intensity = 0.7,
     follow_mode = "tap", -- tap, swipe
     notification = true,
-    position = 0.5, -- 0.0 to 1.0 (percentage of screen height)
 }
 
 ---@class Settings

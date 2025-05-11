@@ -91,6 +91,7 @@ function RulerUI:updateUI()
     end
 
     local line_props = self.ruler:getLineProperties()
+    self.ruler_widget.background = line_props.color
     self.ruler_widget.style = line_props.style
     self.ruler_widget.dimen.h = line_props.thickness
 

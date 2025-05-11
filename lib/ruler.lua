@@ -16,7 +16,6 @@ function Ruler:new(o)
     o.document = o.document
 
     -- State
-    o.position = o.settings:get("position") -- position as percentage of screen height
     o.current_line_y = nil
     o.current_line_x = nil
     o.screen_height = Device.screen:getHeight()
