@@ -24,8 +24,23 @@ function Ruler:new(o)
     o.cached_texts = nil
     o.cached_texts_page = nil
     o.last_page = 0
+    o.tap_to_move = false
 
     return o
+end
+
+function Ruler:isTapToMoveMode()
+    return self.tap_to_move
+end
+
+function Ruler:enterTapToMoveMode()
+    self.tap_to_move = true
+    self.line_style = "dashed"
+end
+
+function Ruler:exitTapToMoveMode()
+    self.tap_to_move = false
+    self.line_style = "solid"
 end
 
 function Ruler:setInitialPosition(new_page)
@@ -51,8 +66,6 @@ function Ruler:setInitialPosition(new_page)
     self.last_page = new_page
 end
 
---- Move the ruler to next line
----@return boolean
 function Ruler:moveToNextLine()
     local positions = self:getNearestTextPositions()
     if positions.next then
@@ -70,6 +83,15 @@ function Ruler:moveToPreviousLine()
         return true
     end
 
+    return false
+end
+
+function Ruler:moveToNearestLine(y)
+    local positions = self:getNearestTextPositions(y)
+    if positions.curr then
+        self:move(0, positions.curr.y + positions.curr.h)
+        return true
+    end
     return false
 end
 
@@ -118,7 +140,7 @@ function Ruler:getTexts(ignore_cache)
 
     local texts = self.ui.document:getTextFromPositions(
         { x = 0, y = 0, page = page },
-        { x = self.screen_width, y = self.screen_width },
+        { x = self.screen_width, y = self.screen_height },
         true
     )
 
@@ -131,7 +153,7 @@ end
 function Ruler:getLineProperties()
     return {
         thickness = self.settings:get("line_thickness"),
-        style = self.settings:get("line_style"),
+        style = self.line_style,
         color = Blitbuffer.gray(self.settings:get("line_intensity")),
     }
 end

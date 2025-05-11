@@ -56,50 +56,19 @@ end
 function RulerUI:setupGestures()
     -- Set up gesture ranges for different parts of the screen
     if Device:isTouchDevice() then
-        -- self.ges_events = {
+        local range = Geom:new({ x = 0, y = 0, w = Screen:getWidth(), h = Screen:getHeight() })
+
         self.inputContainer.ges_events = {
-            TapDragRelease = {
-                GestureRange:new({
-                    ges = "tap_drag_release",
-                    range = Geom:new({
-                        x = 0,
-                        y = 0,
-                        w = Screen:getWidth(),
-                        h = Screen:getHeight(),
-                    }),
-                }),
-            },
             Tap = {
                 GestureRange:new({
                     ges = "tap",
-                    range = Geom:new({
-                        x = 0,
-                        y = 0,
-                        w = Screen:getWidth(),
-                        h = Screen:getHeight(),
-                    }),
+                    range = range,
                 }),
             },
             Swipe = {
                 GestureRange:new({
                     ges = "swipe",
-                    range = Geom:new({
-                        x = 0,
-                        y = 0,
-                        w = Screen:getWidth(),
-                        h = Screen:getHeight(),
-                    }),
-                }),
-            },
-            Hold = {
-                GestureRange:new({
-                    ges = "hold",
-                    range = Geom:new({
-                        x = 0,
-                        y = 0,
-                        w = Screen:getWidth(),
-                        h = Screen:getHeight(),
-                    }),
+                    range = range,
                 }),
             },
         }
@@ -134,9 +103,17 @@ end
 
 function RulerUI:updateUI()
     local geom = self.ruler:getLineGeometry()
-    -- remove the top padding from container to get the correct y position of line
+
+    -- remove the top padding from container to get the correct y position of line.
     local trans_y = geom.y - self.touch_container_widget.padding_top
-    self.movable_widget:setMovedOffset({ x = geom.x, y = trans_y })
+    local curr_y = self.movable_widget:getMovedOffset().y
+
+    if trans_y ~= curr_y then
+        self.movable_widget:setMovedOffset({ x = geom.x, y = trans_y })
+    end
+
+    local line_props = self.ruler:getLineProperties()
+    self.ruler_widget.style = line_props.style
 
     if self.movable_widget ~= nil and self.movable_widget.dimen ~= nil then
         local orig_dimen = self.movable_widget.dimen:copy() -- dimen before move/paintTo
@@ -194,9 +171,32 @@ function RulerUI:onTap(_, ges)
         return false
     end
 
-    -- If tap mode, move ruler to tap position
+    local is_tap_to_move = self.ruler:isTapToMoveMode()
+    local is_tap_on_ruler = ges.pos:intersectWith(self.touch_container_widget.dimen)
+
+    if is_tap_on_ruler then
+        if is_tap_to_move then
+            logger.info("--- exit tap to move")
+            self.ruler:exitTapToMoveMode()
+        else
+            logger.info("--- enter tap to move")
+            self.ruler:enterTapToMoveMode()
+        end
+
+        self:updateUI()
+        return true
+    end
+
+    if is_tap_to_move then
+        logger.info("--- tap to move")
+        self.ruler:moveToNearestLine(ges.pos.y)
+        self.ruler:exitTapToMoveMode()
+        self:updateUI()
+        return true
+    end
+
     if self.settings:get("follow_mode") == "tap" then
-        self.ruler:setPosition(ges.pos.y)
+        self.ruler:moveToNextLine()
         self:updateUI()
         return true
     end
@@ -236,33 +236,6 @@ function RulerUI:onSwipe(_, ges)
     end
 
     return false
-end
-
-function RulerUI:onHold(_, ges)
-    if not self.settings:isEnabled() then
-        return false
-    end
-
-    -- If hold mode, move ruler to hold position
-    if self.settings:get("follow_mode") == "hold" then
-        self.ruler:setPosition(ges.pos.y)
-        self:updateUI()
-        return true
-    end
-
-    return false
-end
-
--- For drag-based movement
-function RulerUI:onTapDragRelease(_, ges)
-    if not self.settings:isEnabled() then
-        return false
-    end
-
-    -- Move ruler to final drag position
-    self.ruler:setPosition(ges.pos.y)
-    self:updateUI()
-    return true
 end
 
 return RulerUI

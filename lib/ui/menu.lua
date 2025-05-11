@@ -41,48 +41,6 @@ function Menu:addToMainMenu(menu_items)
                 end,
             },
             {
-                text = _("Line style"),
-                keep_menu_open = true,
-                sub_item_table = {
-                    {
-                        text = _("Solid"),
-                        checked_func = function()
-                            return self.settings:get("line_style") == "solid"
-                        end,
-                        callback = function()
-                            self.settings:set("line_style", "solid")
-                            if self.settings:isEnabled() then
-                                self.ruler_ui:updateUI()
-                            end
-                        end,
-                    },
-                    {
-                        text = _("Dashed"),
-                        checked_func = function()
-                            return self.settings:get("line_style") == "dashed"
-                        end,
-                        callback = function()
-                            self.settings:set("line_style", "dashed")
-                            if self.settings:isEnabled() then
-                                self.ruler_ui:updateUI()
-                            end
-                        end,
-                    },
-                    {
-                        text = _("Dotted"),
-                        checked_func = function()
-                            return self.settings:get("line_style") == "dotted"
-                        end,
-                        callback = function()
-                            self.settings:set("line_style", "dotted")
-                            if self.settings:isEnabled() then
-                                self.ruler_ui:updateUI()
-                            end
-                        end,
-                    },
-                },
-            },
-            {
                 text = _("Follow mode"),
                 keep_menu_open = true,
                 sub_item_table = {
