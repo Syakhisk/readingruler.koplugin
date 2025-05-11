@@ -1,6 +1,7 @@
 local _ = require("gettext")
 local Device = require("device")
 local Event = require("ui/event")
+local Font = require("ui/font")
 local FrameContainer = require("ui/widget/container/framecontainer")
 local Geom = require("ui/geometry")
 local LineWidget = require("ui/widget/linewidget")
@@ -219,6 +220,7 @@ function RulerUI:onTap(_, ges)
         else
             logger.info("--- ReadingRuler: enter tap to move ---")
             self.ruler:enterTapToMoveMode()
+            self:notifyTapToMove()
         end
 
         self:updateUI()
@@ -260,6 +262,14 @@ function RulerUI:onSwipe(_, ges)
     end
 
     return false
+end
+
+function RulerUI:notifyTapToMove()
+    UIManager:show(Notification:new({
+        face = Font:getFace("xx_smallinfofont"),
+        text = _("Tap anywhere to move ruler or tap the ruler again to exit."),
+        timeout = 3,
+    }))
 end
 
 return RulerUI
