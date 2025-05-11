@@ -130,7 +130,7 @@ function RulerUI:paintTo(bb, x, y)
 
     -- Paint the ruler widget to the screen
     if self.movable_widget then
-        logger.info("--- RulerUI:paintTo")
+        logger.info("--- RulerUI:paintTo ---")
         self.movable_widget:paintTo(bb, x, y)
     end
 end
@@ -213,10 +213,10 @@ function RulerUI:onTap(_, ges)
 
     if is_tap_on_ruler then
         if is_tap_to_move then
-            logger.info("--- exit tap to move")
+            logger.info("--- ReadingRuler: exit tap to move ---")
             self.ruler:exitTapToMoveMode()
         else
-            logger.info("--- enter tap to move")
+            logger.info("--- ReadingRuler: enter tap to move ---")
             self.ruler:enterTapToMoveMode()
         end
 
@@ -225,7 +225,7 @@ function RulerUI:onTap(_, ges)
     end
 
     if is_tap_to_move then
-        logger.info("--- tap to move")
+        logger.info("--- ReadingRuler: tap to move ---")
         self.ruler:moveToNearestLine(ges.pos.y)
         self.ruler:exitTapToMoveMode()
         self:updateUI()
@@ -243,8 +243,6 @@ function RulerUI:onSwipe(_, ges)
     if not self.settings:isEnabled() then
         return false
     end
-
-    logger.info("--- RulerUI:onSwipe ---")
 
     local follow_mode = self.settings:get("follow_mode")
 

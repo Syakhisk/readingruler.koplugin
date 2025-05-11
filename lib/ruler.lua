@@ -142,11 +142,11 @@ function Ruler:getTexts(ignore_cache)
     local page = self.document:getCurrentPage()
 
     if not ignore_cache and self.cached_texts and self.cached_texts_page == page then
-        logger.info("Ruler: cache hit")
+        logger.info("--- Ruler: cache hit ---")
         return self.cached_texts
     end
 
-    logger.info("Ruler: cache miss")
+    logger.info("--- Ruler: cache miss ---")
 
     --- TODO: handle multi column
     local texts = self.ui.document:getTextFromPositions(
