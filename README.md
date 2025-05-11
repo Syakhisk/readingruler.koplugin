@@ -56,10 +56,10 @@ Some features of this plugin may not work as expected in two columns mode, this 
 
 I have been using this plugin myself, and as of now, I don't need any additional features. However, I am open to feature requests to improve the plugin. Pull requests are also welcomed!
 
-## Possible improvements
-
+## Laundry List
 TODO:
 
+- [ ] Update screenshots in readme and add demo
 - [ ] Support two columns
 - [ ] Support continuous/scroll view mode
 
