@@ -104,6 +104,8 @@ end
 ---@param y? number
 ---@return table
 function Ruler:getNearestTextPositions(y)
+    -- local before = os.clock()
+
     if y == nil then
         y = self.current_line_y
     end
@@ -125,6 +127,13 @@ function Ruler:getNearestTextPositions(y)
     local prev = nearest_idx and texts.sboxes[nearest_idx - 1] or nil
     local next = nearest_idx and texts.sboxes[nearest_idx + 1] or nil
 
+    -- self:__printTextFromSbox(prev)
+    -- self:__printTextFromSbox(nearest_sbox)
+    -- self:__printTextFromSbox(next)
+
+    -- local after = os.clock()
+    -- logger.info(string.format("Ruler:getNearestTextPositions time: %0.6f", after - before))
+
     return { prev = prev, curr = nearest_sbox, next = next }
 end
 
@@ -138,6 +147,7 @@ function Ruler:getTexts(ignore_cache)
 
     logger.info("Ruler: cache miss")
 
+    --- TODO: handle multi column
     local texts = self.ui.document:getTextFromPositions(
         { x = 0, y = 0, page = page },
         { x = self.screen_width, y = self.screen_height },
@@ -166,6 +176,23 @@ function Ruler:getLineGeometry()
         w = self.screen_width,
         h = self.settings:get("line_thickness"),
     }
+end
+
+function Ruler:__printTextFromSbox(sbox)
+    local page = self.document:getCurrentPage()
+
+    if sbox == nil then
+        logger.info("nil")
+        return
+    end
+
+    local dbg_texts = self.ui.document:getTextFromPositions(
+        { x = sbox.x, y = sbox.y, page = page },
+        { x = sbox.x + sbox.w, y = sbox.y + sbox.h },
+        true
+    )
+
+    logger.info(dbg_texts.text:sub(1, 20), sbox)
 end
 
 return Ruler
