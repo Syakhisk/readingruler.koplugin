@@ -3,6 +3,7 @@ local Menu = {}
 local UIManager = require("ui/uimanager")
 local Notification = require("ui/widget/notification")
 local SpinWidget = require("ui/widget/spinwidget")
+local logger = require("logger")
 
 function Menu:new(o)
     o = o or {}
@@ -64,16 +65,6 @@ function Menu:addToMainMenu(menu_items)
                             self:showNotification(_("Swipe to move ruler"))
                         end,
                     },
-                    {
-                        text = _("Hold to move"),
-                        checked_func = function()
-                            return self.settings:get("follow_mode") == "hold"
-                        end,
-                        callback = function()
-                            self.settings:set("follow_mode", "hold")
-                            self:showNotification(_("Hold to move ruler"))
-                        end,
-                    },
                 },
             },
             {
@@ -83,18 +74,6 @@ function Menu:addToMainMenu(menu_items)
                 end,
                 callback = function()
                     self.settings:toggle("notification")
-                end,
-            },
-            {
-                text = _("Reset ruler position"),
-                keep_menu_open = true,
-                callback = function()
-                    self.settings:set("position", 0.5) -- Reset to middle
-                    if self.settings:isEnabled() then
-                        self.ruler:calculateDefaultPosition()
-                        self.ruler_ui:updateUI()
-                    end
-                    self:showNotification(_("Ruler position reset"))
                 end,
             },
         },
@@ -116,25 +95,24 @@ function Menu:toggleRuler()
 end
 
 function Menu:showLineThicknessDialog()
-    local current_thickness = self.settings:get("line_thickness")
-
-    UIManager:show(SpinWidget:new({
-        title_text = _("Line thickness"),
-        info_text = _("Set the thickness of the ruler line."),
-        width = math.floor(current_thickness),
-        value = current_thickness,
-        value_min = 1,
-        value_max = 10,
+    local spin_widget = SpinWidget:new({
+        value = self.settings:get("line_thickness"),
+        value_min = 0,
+        value_max = 100,
         value_step = 1,
-        value_hold_step = 2,
+        value_hold_step = 5,
+        title_text = _("Line thickness"),
         ok_text = _("Set thickness"),
         callback = function(new_thickness)
-            self.settings:set("line_thickness", new_thickness)
+            self.settings:set("line_thickness", new_thickness.value)
+
             if self.settings:isEnabled() then
                 self.ruler_ui:updateUI()
             end
         end,
-    }))
+    })
+
+    UIManager:show(spin_widget)
 end
 
 function Menu:showNotification(text)

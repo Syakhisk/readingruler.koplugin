@@ -1,4 +1,3 @@
-local Blitbuffer = require("ffi/blitbuffer")
 local FrameContainer = require("ui/widget/container/framecontainer")
 local Device = require("device")
 local Geom = require("ui/geometry")
@@ -87,11 +86,12 @@ function RulerUI:buildUI()
         dimen = Geom:new({ w = geom.w, h = geom.h }),
     })
 
+    local padding_y = 0.01 * Screen:getHeight() -- NOTE: see if this needs to be configurable
     self.touch_container_widget = FrameContainer:new({
         bordersize = 0,
         padding = 0,
-        padding_top = 0.01 * Screen:getHeight(), -- TODO: settings
-        padding_bottom = 0.01 * Screen:getHeight(), -- TODO: settings
+        padding_top = padding_y,
+        padding_bottom = padding_y,
         self.ruler_widget,
     })
 
@@ -114,6 +114,7 @@ function RulerUI:updateUI()
 
     local line_props = self.ruler:getLineProperties()
     self.ruler_widget.style = line_props.style
+    self.ruler_widget.dimen.h = line_props.thickness
 
     if self.movable_widget ~= nil and self.movable_widget.dimen ~= nil then
         local orig_dimen = self.movable_widget.dimen:copy() -- dimen before move/paintTo
