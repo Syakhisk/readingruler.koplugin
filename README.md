@@ -10,7 +10,6 @@ The **Reading Ruler** plugin is a tool designed to enhance the reading experienc
 - **Tap-to-Move Mode**: Quickly reposition the ruler by tapping on the desired location.
 - **Swipe Navigation**: Use swipe gestures to move the ruler to the next or previous line of text.
 - **Automatic Page Navigation**: Automatically navigate to the next or previous page when reaching the end of the current page.
-- **Reset Position**: Easily reset the ruler to its default position.
 
 ## Preview
 
@@ -57,10 +56,10 @@ Some features of this plugin may not work as expected in two columns mode, this 
 
 I have been using this plugin myself, and as of now, I don't need any additional features. However, I am open to feature requests to improve the plugin. Pull requests are also welcomed!
 
-## Possible improvements
-
+## Laundry List
 TODO:
 
+- [ ] Update screenshots in readme and add demo
 - [ ] Support two columns
 - [ ] Support continuous/scroll view mode
 
