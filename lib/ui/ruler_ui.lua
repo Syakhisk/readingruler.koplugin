@@ -1,23 +1,51 @@
 local Blitbuffer = require("ffi/blitbuffer")
+local FrameContainer = require("ui/widget/container/framecontainer")
 local Device = require("device")
 local Geom = require("ui/geometry")
 local GestureRange = require("ui/gesturerange")
 local WidgetContainer = require("ui/widget/container/widgetcontainer")
+local MovableContainer = require("ui/widget/container/movablecontainer")
 local LineWidget = require("ui/widget/linewidget")
 local UIManager = require("ui/uimanager")
 local Screen = Device.screen
 local logger = require("logger")
 
+local ignore_events = {
+    "hold",
+    "hold_release",
+    "hold_pan",
+    "swipe",
+    "touch",
+    "pan",
+    "pan_release",
+}
+
+---@class RulerUI
 local RulerUI = WidgetContainer:new()
 
-function RulerUI:init()
-    -- TODO: check if this correct
-    self.ruler = self.ruler
-    self.settings = self.settings
-    self.ui = self.ui
+function RulerUI:new(args)
+    -- Create a new instance of RulerUI
+    local o = WidgetContainer:new(args)
+    setmetatable(o, self)
+    self.__index = self
 
+    -- Initialize properties
+    o.ruler = args.ruler
+    o.settings = args.settings
+    o.ui = args.ui
+    o.inputContainer = args.inputContainer
+
+    -- Initialize the ruler UI
+    o:init()
+
+    return o
+end
+
+function RulerUI:init()
     -- State
     self.ruler_widget = nil
+    self.touch_container_widget = nil
+    self.movable_widget = nil
     self.is_visible = false
 
     -- Create gesture handling
@@ -27,112 +55,119 @@ end
 function RulerUI:setupGestures()
     -- Set up gesture ranges for different parts of the screen
     if Device:isTouchDevice() then
-        self.ges_events = {
+        -- self.ges_events = {
+        self.inputContainer.ges_events = {
             TapDragRelease = {
-                GestureRange:new {
+                GestureRange:new({
                     ges = "tap_drag_release",
-                    range = Geom:new {
-                        x = 0, y = 0,
+                    range = Geom:new({
+                        x = 0,
+                        y = 0,
                         w = Screen:getWidth(),
                         h = Screen:getHeight(),
-                    }
-                },
+                    }),
+                }),
             },
             Tap = {
-                GestureRange:new {
+                GestureRange:new({
                     ges = "tap",
-                    range = Geom:new {
-                        x = 0, y = 0,
+                    range = Geom:new({
+                        x = 0,
+                        y = 0,
                         w = Screen:getWidth(),
                         h = Screen:getHeight(),
-                    }
-                },
+                    }),
+                }),
             },
             Swipe = {
-                GestureRange:new {
+                GestureRange:new({
                     ges = "swipe",
-                    range = Geom:new {
-                        x = 0, y = 0,
+                    range = Geom:new({
+                        x = 0,
+                        y = 0,
                         w = Screen:getWidth(),
                         h = Screen:getHeight(),
-                    }
-                },
+                    }),
+                }),
             },
             Hold = {
-                GestureRange:new {
+                GestureRange:new({
                     ges = "hold",
-                    range = Geom:new {
-                        x = 0, y = 0,
+                    range = Geom:new({
+                        x = 0,
+                        y = 0,
                         w = Screen:getWidth(),
                         h = Screen:getHeight(),
-                    }
-                },
+                    }),
+                }),
             },
         }
     end
 end
 
 function RulerUI:buildUI()
+    logger.info("--- build ruler UI")
     -- Create or update the ruler line widget
     local line_props = self.ruler:getLineProperties()
     local geom = self.ruler:getLineGeometry()
 
     -- Create line widget
-    self.ruler_widget = LineWidget:new {
-        dimen = Geom:new {
-            x = geom.x,
-            y = geom.y,
-            w = geom.w,
-            h = geom.h,
-        },
-        thick = line_props.thickness,
-        style = line_props.style,
-        color = line_props.color,
-    }
+    self.ruler_widget = LineWidget:new({
+        background = line_props.color,
+        dimen = Geom:new({ w = geom.w, h = geom.h }),
+    })
+
+    self.touch_container_widget = FrameContainer:new({
+        bordersize = 0,
+        padding_top = 0.01 * Screen:getHeight(), -- TODO: settings
+        padding_bottom = 0.01 * Screen:getHeight(), -- TODO: settings
+        self.ruler_widget,
+    })
+
+    self.movable_widget = MovableContainer:new({
+        ignore_events = ignore_events,
+        self.touch_container_widget,
+    })
 
     -- Make ruler visible
     self:show()
 end
 
 function RulerUI:updateUI()
-    -- Update the ruler widget with new position/properties
-    if not self.ruler_widget then return end
+    if self.movable_widget ~= nil and self.movable_widget.dimen ~= nil then
+        local orig_dimen = self.movable_widget.dimen:copy() -- dimen before move/paintTo
 
-    local line_props = self.ruler:getLineProperties()
-    local geom = self.ruler:getLineGeometry()
-
-    self.ruler_widget:free()
-    self.ruler_widget = LineWidget:new {
-        dimen = Geom:new {
-            x = geom.x,
-            y = geom.y,
-            w = geom.w,
-            h = geom.h,
-        },
-        thick = line_props.thickness,
-        style = line_props.style,
-        color = line_props.color,
-    }
-
-    -- Force a UI update
-    UIManager:setDirty(self.ruler_widget)
+        UIManager:setDirty("all", function()
+            local update_region = orig_dimen:combine(self.movable_widget.dimen)
+            logger.dbg("ReadingRuler: refresh region", update_region)
+            return "ui", update_region
+        end)
+    end
 end
 
 function RulerUI:show()
     -- Show the ruler if not already visible
-    if not self.is_visible and self.ruler_widget then
+    if not self.is_visible and self.movable_widget then
         UIManager:setDirty(nil, function()
-            return "ui", self.ruler_widget.dimen
+            return "ui", self.movable_widget.dimen
         end)
         self.is_visible = true
     end
 end
 
+function RulerUI:paintTo(bb, x, y)
+    -- Paint the ruler widget to the screen
+    if self.movable_widget then
+        logger.info("--- RulerUI:paintTo")
+        self.movable_widget:paintTo(bb, x, y)
+    end
+end
+
 function RulerUI:hide()
     -- Hide the ruler
-    if self.is_visible and self.ruler_widget then
+    if self.is_visible and self.movable_widget then
         UIManager:setDirty(nil, function()
-            return "ui", self.ruler_widget.dimen
+            return "ui", self.movable_widget.dimen
         end)
         self.is_visible = false
     end
@@ -144,10 +179,14 @@ function RulerUI:displayNotification(text)
         return
     end
 
-    UIManager:show(Notification:new {
+    UIManager:show(Notification:new({
         text = text,
         timeout = 2,
-    })
+    }))
+end
+
+function RulerUI:onPageUpdate(new_page)
+    self.ruler:updateLinePosition(new_page)
 end
 
 -- Gesture handling
@@ -171,14 +210,18 @@ function RulerUI:onSwipe(_, ges)
         return false
     end
 
+    logger.info("--- RulerUI:onSwipe ---")
+
     -- If swipe mode, move ruler up/down
     if self.settings:get("follow_mode") == "swipe" then
         if ges.direction == "north" then
-            self.ruler:moveUp(20)
+            local pos = self.ruler:moveUp(20)
+            logger.info("RulerUI:onSwipe: moveUp", pos)
             self:updateUI()
             return true
         elseif ges.direction == "south" then
-            self.ruler:moveDown(20)
+            local pos = self.ruler:moveDown(20)
+            logger.info("RulerUI:onSwipe: moveDown", pos)
             self:updateUI()
             return true
         end

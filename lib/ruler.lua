@@ -1,4 +1,5 @@
 local Geom = require("ui/geometry")
+local Blitbuffer = require("ffi/blitbuffer")
 local Device = require("device")
 local logger = require("logger")
 
@@ -86,7 +87,7 @@ function Ruler:getLineProperties()
     return {
         thickness = self.settings:get("line_thickness"),
         style = self.settings:get("line_style"),
-        color = self.settings:get("line_color"),
+        color = Blitbuffer.gray(self.settings:get("line_intensity")),
     }
 end
 

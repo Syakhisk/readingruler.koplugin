@@ -1,8 +1,5 @@
 local _ = require("gettext")
-local Blitbuffer = require("ffi/blitbuffer")
-local Device = require("device")
 local InputContainer = require("ui/widget/container/inputcontainer")
-local UIManager = require("ui/uimanager")
 local logger = require("logger")
 
 local Settings = require("lib/settings")
@@ -32,6 +29,7 @@ function ReadingRuler:init()
         settings = self.settings,
         ruler = self.ruler,
         ui = self.ui,
+        inputContainer = self,
     })
 
     self.menu = Menu:new({
@@ -41,8 +39,10 @@ function ReadingRuler:init()
         ui = self.ui,
     })
 
-    -- Register with KOReader
+    --- Register to main menu so that `addToMainMenu` is called
     self.ui.menu:registerToMainMenu(self.menu)
+
+    -- Register to UIManager
     self.view:registerViewModule("reading_ruler", self)
 
     -- Initialize UI if enabled
@@ -55,32 +55,32 @@ function ReadingRuler:addToMainMenu(menu_items)
     self.menu:addToMainMenu(menu_items)
 end
 
-function ReadingRuler:onPageUpdate(new_page)
-    if not self.settings:isEnabled() then
-        return
-    end
-
-    self.ruler:updateLinePosition(new_page)
-end
-
 function ReadingRuler:paintTo(bb, x, y)
     if not self.settings:isEnabled() then
         return
     end
 
-    InputContainer.paintTo(self, bb, x, y)
+    self.ruler_ui:paintTo(bb, x, y)
+end
+
+function ReadingRuler:onPageUpdate(new_page)
+    logger.info("--- ReadingRuler:onPageUpdate ---")
+    return self.ruler_ui:onPageUpdate(new_page)
 end
 
 -- Forward events to UI component
 function ReadingRuler:onSwipe(arg, ges)
+    logger.info("--- ReadingRuler:onSwipe ---")
     return self.ruler_ui:onSwipe(arg, ges)
 end
 
 function ReadingRuler:onHold(arg, ges)
+    logger.info("--- ReadingRuler:onHold ---")
     return self.ruler_ui:onHold(arg, ges)
 end
 
 function ReadingRuler:onTap(arg, ges)
+    logger.info("--- ReadingRuler:onTap ---")
     return self.ruler_ui:onTap(arg, ges)
 end
 

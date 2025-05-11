@@ -3,10 +3,6 @@ local Menu = {}
 local UIManager = require("ui/uimanager")
 local Notification = require("ui/widget/notification")
 local SpinWidget = require("ui/widget/spinwidget")
-local ConfirmBox = require("ui/widget/confirmbox")
-local InfoMessage = require("ui/widget/infomessage")
-local ButtonDialogTitle = require("ui/widget/buttondialogtitle")
-local logger = require("logger")
 
 function Menu:new(o)
     o = o or {}
@@ -30,8 +26,12 @@ function Menu:addToMainMenu(menu_items)
             {
                 text = _("Toggle reading ruler"),
                 keep_menu_open = true,
-                checked_func = function() return self.settings:isEnabled() end,
-                callback = function() self:toggleRuler() end,
+                checked_func = function()
+                    return self.settings:isEnabled()
+                end,
+                callback = function()
+                    self:toggleRuler()
+                end,
             },
             {
                 text = _("Line thickness"),
@@ -46,7 +46,9 @@ function Menu:addToMainMenu(menu_items)
                 sub_item_table = {
                     {
                         text = _("Solid"),
-                        checked_func = function() return self.settings:get("line_style") == "solid" end,
+                        checked_func = function()
+                            return self.settings:get("line_style") == "solid"
+                        end,
                         callback = function()
                             self.settings:set("line_style", "solid")
                             if self.settings:isEnabled() then
@@ -56,7 +58,9 @@ function Menu:addToMainMenu(menu_items)
                     },
                     {
                         text = _("Dashed"),
-                        checked_func = function() return self.settings:get("line_style") == "dashed" end,
+                        checked_func = function()
+                            return self.settings:get("line_style") == "dashed"
+                        end,
                         callback = function()
                             self.settings:set("line_style", "dashed")
                             if self.settings:isEnabled() then
@@ -66,7 +70,9 @@ function Menu:addToMainMenu(menu_items)
                     },
                     {
                         text = _("Dotted"),
-                        checked_func = function() return self.settings:get("line_style") == "dotted" end,
+                        checked_func = function()
+                            return self.settings:get("line_style") == "dotted"
+                        end,
                         callback = function()
                             self.settings:set("line_style", "dotted")
                             if self.settings:isEnabled() then
@@ -74,7 +80,7 @@ function Menu:addToMainMenu(menu_items)
                             end
                         end,
                     },
-                }
+                },
             },
             {
                 text = _("Follow mode"),
@@ -82,7 +88,9 @@ function Menu:addToMainMenu(menu_items)
                 sub_item_table = {
                     {
                         text = _("Tap to move"),
-                        checked_func = function() return self.settings:get("follow_mode") == "tap" end,
+                        checked_func = function()
+                            return self.settings:get("follow_mode") == "tap"
+                        end,
                         callback = function()
                             self.settings:set("follow_mode", "tap")
                             self:showNotification(_("Tap to move ruler"))
@@ -90,7 +98,9 @@ function Menu:addToMainMenu(menu_items)
                     },
                     {
                         text = _("Swipe to move"),
-                        checked_func = function() return self.settings:get("follow_mode") == "swipe" end,
+                        checked_func = function()
+                            return self.settings:get("follow_mode") == "swipe"
+                        end,
                         callback = function()
                             self.settings:set("follow_mode", "swipe")
                             self:showNotification(_("Swipe to move ruler"))
@@ -98,17 +108,21 @@ function Menu:addToMainMenu(menu_items)
                     },
                     {
                         text = _("Hold to move"),
-                        checked_func = function() return self.settings:get("follow_mode") == "hold" end,
+                        checked_func = function()
+                            return self.settings:get("follow_mode") == "hold"
+                        end,
                         callback = function()
                             self.settings:set("follow_mode", "hold")
                             self:showNotification(_("Hold to move ruler"))
                         end,
                     },
-                }
+                },
             },
             {
                 text = _("Notifications"),
-                checked_func = function() return self.settings:get("notification") end,
+                checked_func = function()
+                    return self.settings:get("notification")
+                end,
                 callback = function()
                     self.settings:toggle("notification")
                 end,
@@ -125,7 +139,7 @@ function Menu:addToMainMenu(menu_items)
                     self:showNotification(_("Ruler position reset"))
                 end,
             },
-        }
+        },
     }
 end
 
@@ -146,7 +160,7 @@ end
 function Menu:showLineThicknessDialog()
     local current_thickness = self.settings:get("line_thickness")
 
-    UIManager:show(SpinWidget:new {
+    UIManager:show(SpinWidget:new({
         title_text = _("Line thickness"),
         info_text = _("Set the thickness of the ruler line."),
         width = math.floor(current_thickness),
@@ -162,15 +176,15 @@ function Menu:showLineThicknessDialog()
                 self.ruler_ui:updateUI()
             end
         end,
-    })
+    }))
 end
 
 function Menu:showNotification(text)
     if self.settings:get("notification") then
-        UIManager:show(Notification:new {
+        UIManager:show(Notification:new({
             text = text,
             timeout = 2,
-        })
+        }))
     end
 end
 
