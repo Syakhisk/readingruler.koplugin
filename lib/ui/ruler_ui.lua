@@ -166,6 +166,30 @@ function RulerUI:onPageUpdate(new_page)
     self:updateUI()
 end
 
+--- Handle navigation between lines or pages
+-- @param direction string "next" or "prev" to indicate navigation direction
+-- @return boolean True if handled
+function RulerUI:handleLineNavigation(direction)
+    if direction == "next" then
+        if self.ruler:moveToNextLine() then
+            self:updateUI()
+            return true
+        end
+        -- If we can't move to next line, go to next page
+        self.ui:handleEvent(Event:new("GotoViewRel", 1))
+        return true
+    elseif direction == "prev" then
+        if self.ruler:moveToPreviousLine() then
+            self:updateUI()
+            return true
+        end
+        -- If we can't move to previous line, go to previous page
+        self.ui:handleEvent(Event:new("GotoViewRel", -1))
+        return true
+    end
+    return false
+end
+
 -- Gesture handling
 function RulerUI:onTap(_, ges)
     if not self.settings:isEnabled() then
@@ -197,9 +221,7 @@ function RulerUI:onTap(_, ges)
     end
 
     if self.settings:get("follow_mode") == "tap" then
-        self.ruler:moveToNextLine()
-        self:updateUI()
-        return true
+        return self:handleLineNavigation("next")
     end
 
     return false
@@ -217,26 +239,12 @@ function RulerUI:onSwipe(_, ges)
     if follow_mode == "swipe" or follow_mode == "tap" then
         -- Swipe up will move to previous line either way
         if ges.direction == "north" then
-            if self.ruler:moveToPreviousLine() then
-                self:updateUI()
-                return true
-            end
-
-            self.ui:handleEvent(Event:new("GotoViewRel", -1))
-            return true
+            return self:handleLineNavigation("prev")
         end
 
-        -- only move down, if swipe to south and follow_mode is swipe.
-        if follow_mode == "swipe" then
-            if ges.direction == "south" then
-                if self.ruler:moveToNextLine() then
-                    self:updateUI()
-                    return true
-                end
-
-                self.ui:handleEvent(Event:new("GotoViewRel", 1))
-                return true
-            end
+        -- only move down if swipe to south and follow_mode is swipe
+        if follow_mode == "swipe" and ges.direction == "south" then
+            return self:handleLineNavigation("next")
         end
     end
 
