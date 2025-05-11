@@ -1,13 +1,15 @@
-local FrameContainer = require("ui/widget/container/framecontainer")
+local _ = require("gettext")
 local Device = require("device")
-local Geom = require("ui/geometry")
-local WidgetContainer = require("ui/widget/container/widgetcontainer")
-local MovableContainer = require("ui/widget/container/movablecontainer")
-local LineWidget = require("ui/widget/linewidget")
-local UIManager = require("ui/uimanager")
-local Screen = Device.screen
-local logger = require("logger")
 local Event = require("ui/event")
+local FrameContainer = require("ui/widget/container/framecontainer")
+local Geom = require("ui/geometry")
+local LineWidget = require("ui/widget/linewidget")
+local MovableContainer = require("ui/widget/container/movablecontainer")
+local Notification = require("ui/widget/notification")
+local Screen = Device.screen
+local UIManager = require("ui/uimanager")
+local WidgetContainer = require("ui/widget/container/widgetcontainer")
+local logger = require("logger")
 
 local ignore_events = {
     "hold",
@@ -32,7 +34,7 @@ function RulerUI:new(args)
     o.ruler = args.ruler
     o.settings = args.settings
     o.ui = args.ui
-    o.inputContainer = args.inputContainer
+    o.document = args.document
 
     -- Initialize the ruler UI
     o:init()
@@ -45,11 +47,10 @@ function RulerUI:init()
     self.ruler_widget = nil
     self.touch_container_widget = nil
     self.movable_widget = nil
-    self.is_visible = false
+    self.is_built = false
 end
 
 function RulerUI:buildUI()
-    logger.info("--- build ruler UI")
     -- Create or update the ruler line widget
     local line_props = self.ruler:getLineProperties()
     local geom = self.ruler:getLineGeometry()
@@ -73,8 +74,11 @@ function RulerUI:buildUI()
         ignore_events = ignore_events,
         self.touch_container_widget,
     })
+
+    -- self.is_built = true
 end
 
+-- Set positions and styling of the ruler, and repaint the UI to reflect changes
 function RulerUI:updateUI()
     local geom = self.ruler:getLineGeometry()
 
@@ -90,15 +94,33 @@ function RulerUI:updateUI()
     self.ruler_widget.style = line_props.style
     self.ruler_widget.dimen.h = line_props.thickness
 
-    if self.movable_widget ~= nil and self.movable_widget.dimen ~= nil then
-        local orig_dimen = self.movable_widget.dimen:copy() -- dimen before move/paintTo
+    self:repaint()
+end
 
-        UIManager:setDirty("all", function()
-            local update_region = orig_dimen:combine(self.movable_widget.dimen)
-            logger.dbg("ReadingRuler: refresh region", update_region)
-            return "ui", update_region
-        end)
+function RulerUI:destroyUI()
+    self:repaint()
+end
+
+function RulerUI:repaint()
+    logger.info("--- RulerUI:repaint ---")
+
+    if not self.movable_widget then
+        return
     end
+
+    local orig_dimen = nil
+    -- If widget is already drawn, get the dimen before move
+    if self.movable_widget.dimen then
+        orig_dimen = self.movable_widget.dimen:copy()
+    end
+
+    -- The callback will be called in the next tick, so the movable_widget here is the one that is moved to the new position
+    UIManager:setDirty("all", function()
+        -- If widget is already drawn, combine the original dimen with the new one
+        local update_region = orig_dimen and orig_dimen:combine(self.movable_widget.dimen) or self.movable_widget.dimen
+        logger.dbg("ReadingRuler: refresh region", update_region)
+        return "ui", update_region
+    end)
 end
 
 function RulerUI:paintTo(bb, x, y)
@@ -113,13 +135,25 @@ function RulerUI:paintTo(bb, x, y)
     end
 end
 
-function RulerUI:hide()
-    -- Hide the ruler
-    if self.is_visible and self.movable_widget then
-        UIManager:setDirty(nil, function()
-            return "ui", self.movable_widget.dimen
-        end)
-        self.is_visible = false
+function RulerUI:setEnabled(enabled)
+    if enabled then
+        self.settings:enable()
+        self:buildUI()
+        self.ruler:setInitialPositionOnPage(self.document:getCurrentPage())
+        self:updateUI()
+        self:displayNotification(_("Reading ruler enabled"))
+    else
+        self.settings:disable()
+        self:destroyUI()
+        self:displayNotification(_("Reading ruler disabled"))
+    end
+end
+
+function RulerUI:toggleEnabled()
+    if self.settings:isEnabled() then
+        self:setEnabled(true)
+    else
+        self:setEnabled(false)
     end
 end
 
@@ -136,7 +170,11 @@ function RulerUI:displayNotification(text)
 end
 
 function RulerUI:onPageUpdate(new_page)
-    self.ruler:setInitialPosition(new_page)
+    if not self.settings:isEnabled() then
+        return
+    end
+
+    self.ruler:setInitialPositionOnPage(new_page)
     self:updateUI()
 end
 

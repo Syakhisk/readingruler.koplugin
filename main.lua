@@ -34,7 +34,7 @@ function ReadingRuler:init()
         settings = self.settings,
         ruler = self.ruler,
         ui = self.ui,
-        inputContainer = self,
+        document = self.document,
     })
 
     self.menu = Menu:new({
@@ -58,6 +58,7 @@ function ReadingRuler:init()
 
     -- Initialize UI if enabled
     if self.settings:isEnabled() then
+        -- NOTE: only build the UI here, positioning is set in onPageUpdate
         self.ruler_ui:buildUI()
     end
 end
@@ -157,28 +158,24 @@ function ReadingRuler:onTap(arg, ges)
 end
 
 function ReadingRuler:onReadingRulerMoveToNextLine()
-    logger.info("ReadingRulerMoveToNextLine")
+    logger.info("--- ReadingRulerMoveToNextLine ---")
     self.ruler_ui:handleLineNavigation("next")
 end
 
 function ReadingRuler:onReadingRulerMoveToPreviousLine()
-    logger.info("ReadingRulerMoveToPreviousLine")
+    logger.info("--- ReadingRulerMoveToPreviousLine ---")
     self.ruler_ui:handleLineNavigation("prev")
 end
 
 function ReadingRuler:onReadingRulerSetState(state)
-    logger.info("ReadingRulerSetState: " .. tostring(state))
-    if state then
-        self.settings:enable()
-    else
-        self.settings:disable()
-    end
+    logger.info("--- ReadingRulerSetState:", state, "---")
+    self.ruler_ui:setEnabled(state)
 end
 
 function ReadingRuler:onReadingRulerToggle()
-    logger.info("ReadingRulerToggle")
-
-    self.settings:toggle()
+    local state = not self.settings:get("enabled")
+    logger.info("--- ReadingRulerToggle to:", state, "---")
+    self.ruler_ui:setEnabled(state)
 end
 
 return ReadingRuler

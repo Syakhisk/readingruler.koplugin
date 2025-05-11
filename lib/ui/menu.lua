@@ -29,7 +29,7 @@ function Menu:addToMainMenu(menu_items)
                     return self.settings:isEnabled()
                 end,
                 callback = function()
-                    self:toggleRuler()
+                    self.ruler_ui:toggleEnabled()
                 end,
             },
             {
@@ -50,7 +50,7 @@ function Menu:addToMainMenu(menu_items)
                         end,
                         callback = function()
                             self.settings:set("follow_mode", "tap")
-                            self:showNotification(_("Tap to move ruler"))
+                            self.ruler_ui:displayNotification(_("Tap to move ruler"))
                         end,
                     },
                     {
@@ -60,7 +60,7 @@ function Menu:addToMainMenu(menu_items)
                         end,
                         callback = function()
                             self.settings:set("follow_mode", "swipe")
-                            self:showNotification(_("Swipe to move ruler"))
+                            self.ruler_ui:displayNotification(_("Swipe to move ruler"))
                         end,
                     },
                 },
@@ -76,20 +76,6 @@ function Menu:addToMainMenu(menu_items)
             },
         },
     }
-end
-
-function Menu:toggleRuler()
-    if self.settings:isEnabled() then
-        -- Turn off
-        self.settings:disable()
-        self.ruler_ui:hide()
-        self:showNotification(_("Reading ruler disabled"))
-    else
-        -- Turn on
-        self.settings:enable()
-        self.ruler_ui:buildUI()
-        self:showNotification(_("Reading ruler enabled"))
-    end
 end
 
 function Menu:showLineThicknessDialog()
@@ -111,15 +97,6 @@ function Menu:showLineThicknessDialog()
     })
 
     UIManager:show(spin_widget)
-end
-
-function Menu:showNotification(text)
-    if self.settings:get("notification") then
-        UIManager:show(Notification:new({
-            text = text,
-            timeout = 2,
-        }))
-    end
 end
 
 return Menu

@@ -39,10 +39,11 @@ function Settings:init()
     -- Initialize with default values if not set
     for key, value in pairs(DEFAULTS) do
         if self:get(key) == nil then
-            self:set(key, value)
+            self:set(key, value, true)
         end
     end
-    self:flush()
+
+    self.settings:flush()
 end
 
 --- Get settings from the settings file.
@@ -55,13 +56,19 @@ end
 --- Set a setting in the settings file, returning true if the value changed.
 ---@param key string The key of the setting to set.
 ---@param value any The value to set.
+---@param skip_flush? boolean defaults to false. If true, do not flush the settings file.
 ---@return boolean
-function Settings:set(key, value)
+function Settings:set(key, value, skip_flush)
     if self:get(key) ~= value then
         self.settings:saveSetting(key, value)
-        self.settings:flush()
+
+        if not skip_flush then
+            self.settings:flush()
+        end
+
         return true
     end
+
     return false
 end
 
@@ -86,21 +93,13 @@ end
 --- Enable the plugin and flush.
 function Settings:enable()
     self:set("enabled", true)
-    -- self:flush()
 end
 
 --- Disable the plugin and flush.
 function Settings:disable()
     self:set("enabled", false)
-    -- self:flush()
 end
 
---- Write the settings to the file.
-function Settings:flush()
-    self.settings:flush()
-end
-
---
 function Settings:___dump()
     logger.info("--- Settings ---")
     logger.info(require("ffi/serpent").block(self.settings.data))

@@ -43,9 +43,10 @@ function Ruler:exitTapToMoveMode()
     self.line_style = "solid"
 end
 
-function Ruler:setInitialPosition(new_page)
+function Ruler:setInitialPositionOnPage(new_page)
     local texts = self:getTexts()
     if #texts.sboxes < 1 then
+        logger.error("No text boxes found on page " .. new_page)
         return
     end
 
