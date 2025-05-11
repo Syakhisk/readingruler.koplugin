@@ -69,6 +69,16 @@ function Menu:addToMainMenu(menu_items)
                             self.ruler_ui:displayNotification(_("Swipe to move ruler"))
                         end,
                     },
+                    {
+                        text = _("None (bring-your-own gesture)"),
+                        checked_func = function()
+                            return self.settings:get("navigation_mode") == "none"
+                        end,
+                        callback = function()
+                            self.settings:set("navigation_mode", "none")
+                            self.ruler_ui:displayNotification(_("Ruler navigation disabled"))
+                        end,
+                    },
                 },
             },
             {
