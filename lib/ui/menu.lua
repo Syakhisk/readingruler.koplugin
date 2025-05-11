@@ -46,26 +46,26 @@ function Menu:addToMainMenu(menu_items)
                 end,
             },
             {
-                text = _("Follow mode"),
+                text = _("Navigation mode"),
                 keep_menu_open = true,
                 sub_item_table = {
                     {
                         text = _("Tap to move"),
                         checked_func = function()
-                            return self.settings:get("follow_mode") == "tap"
+                            return self.settings:get("navigation_mode") == "tap"
                         end,
                         callback = function()
-                            self.settings:set("follow_mode", "tap")
+                            self.settings:set("navigation_mode", "tap")
                             self.ruler_ui:displayNotification(_("Tap to move ruler"))
                         end,
                     },
                     {
                         text = _("Swipe to move"),
                         checked_func = function()
-                            return self.settings:get("follow_mode") == "swipe"
+                            return self.settings:get("navigation_mode") == "swipe"
                         end,
                         callback = function()
-                            self.settings:set("follow_mode", "swipe")
+                            self.settings:set("navigation_mode", "swipe")
                             self.ruler_ui:displayNotification(_("Swipe to move ruler"))
                         end,
                     },

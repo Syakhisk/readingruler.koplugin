@@ -230,7 +230,7 @@ function RulerUI:onTap(_, ges)
         return true
     end
 
-    if self.settings:get("follow_mode") == "tap" then
+    if self.settings:get("navigation_mode") == "tap" then
         return self:handleLineNavigation("next")
     end
 
@@ -242,16 +242,16 @@ function RulerUI:onSwipe(_, ges)
         return false
     end
 
-    local follow_mode = self.settings:get("follow_mode")
+    local navigation_mode = self.settings:get("navigation_mode")
 
-    if follow_mode == "swipe" or follow_mode == "tap" then
+    if navigation_mode == "swipe" or navigation_mode == "tap" then
         -- Swipe up will move to previous line either way
         if ges.direction == "north" then
             return self:handleLineNavigation("prev")
         end
 
-        -- only move down if swipe to south and follow_mode is swipe
-        if follow_mode == "swipe" and ges.direction == "south" then
+        -- only move down if swipe to south and navigation_mode is swipe
+        if navigation_mode == "swipe" and ges.direction == "south" then
             return self:handleLineNavigation("next")
         end
     end

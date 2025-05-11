@@ -8,7 +8,7 @@ local DEFAULTS = {
     enabled = false,
     line_thickness = 2,
     line_intensity = 0.7,
-    follow_mode = "tap", -- tap, swipe
+    navigation_mode = "tap", -- tap, swipe, none
     notification = true,
 }
 
