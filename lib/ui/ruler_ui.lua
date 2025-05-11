@@ -9,6 +9,7 @@ local LineWidget = require("ui/widget/linewidget")
 local UIManager = require("ui/uimanager")
 local Screen = Device.screen
 local logger = require("logger")
+local Event = require("ui/event")
 
 local ignore_events = {
     "hold",
@@ -119,6 +120,7 @@ function RulerUI:buildUI()
 
     self.touch_container_widget = FrameContainer:new({
         bordersize = 0,
+        padding = 0,
         padding_top = 0.01 * Screen:getHeight(), -- TODO: settings
         padding_bottom = 0.01 * Screen:getHeight(), -- TODO: settings
         self.ruler_widget,
@@ -131,6 +133,11 @@ function RulerUI:buildUI()
 end
 
 function RulerUI:updateUI()
+    local geom = self.ruler:getLineGeometry()
+    -- remove the top padding from container to get the correct y position of line
+    local trans_y = geom.y - self.touch_container_widget.padding_top
+    self.movable_widget:setMovedOffset({ x = geom.x, y = trans_y })
+
     if self.movable_widget ~= nil and self.movable_widget.dimen ~= nil then
         local orig_dimen = self.movable_widget.dimen:copy() -- dimen before move/paintTo
 
@@ -177,7 +184,8 @@ function RulerUI:displayNotification(text)
 end
 
 function RulerUI:onPageUpdate(new_page)
-    self.ruler:onPageUpdate(new_page)
+    self.ruler:setInitialPosition(new_page)
+    self:updateUI()
 end
 
 -- Gesture handling
@@ -203,19 +211,28 @@ function RulerUI:onSwipe(_, ges)
 
     logger.info("--- RulerUI:onSwipe ---")
 
-    -- If swipe mode, move ruler up/down
-    if self.settings:get("follow_mode") == "swipe" then
-        if ges.direction == "north" then
-            local pos = self.ruler:moveUp(20)
-            logger.info("RulerUI:onSwipe: moveUp", pos)
-            self:updateUI()
-            return true
-        elseif ges.direction == "south" then
-            local pos = self.ruler:moveDown(20)
-            logger.info("RulerUI:onSwipe: moveDown", pos)
+    if self.settings:get("follow_mode") ~= "swipe" then
+        return false
+    end
+
+    if ges.direction == "north" then
+        if self.ruler:moveToPreviousLine() then
             self:updateUI()
             return true
         end
+
+        self.ui:handleEvent(Event:new("GotoViewRel", -1))
+        return true
+    end
+
+    if ges.direction == "south" then
+        if self.ruler:moveToNextLine() then
+            self:updateUI()
+            return true
+        end
+
+        self.ui:handleEvent(Event:new("GotoViewRel", 1))
+        return true
     end
 
     return false

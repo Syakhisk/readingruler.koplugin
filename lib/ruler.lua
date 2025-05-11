@@ -28,7 +28,7 @@ function Ruler:new(o)
     return o
 end
 
-function Ruler:onPageUpdate(new_page)
+function Ruler:setInitialPosition(new_page)
     local texts = self:getTexts()
     if #texts.sboxes < 1 then
         return
