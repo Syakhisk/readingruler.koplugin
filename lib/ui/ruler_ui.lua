@@ -212,28 +212,32 @@ function RulerUI:onSwipe(_, ges)
 
     logger.info("--- RulerUI:onSwipe ---")
 
-    if self.settings:get("follow_mode") ~= "swipe" then
-        return false
-    end
+    local follow_mode = self.settings:get("follow_mode")
 
-    if ges.direction == "north" then
-        if self.ruler:moveToPreviousLine() then
-            self:updateUI()
+    if follow_mode == "swipe" or follow_mode == "tap" then
+        -- Swipe up will move to previous line either way
+        if ges.direction == "north" then
+            if self.ruler:moveToPreviousLine() then
+                self:updateUI()
+                return true
+            end
+
+            self.ui:handleEvent(Event:new("GotoViewRel", -1))
             return true
         end
 
-        self.ui:handleEvent(Event:new("GotoViewRel", -1))
-        return true
-    end
+        -- only move down, if swipe to south and follow_mode is swipe.
+        if follow_mode == "swipe" then
+            if ges.direction == "south" then
+                if self.ruler:moveToNextLine() then
+                    self:updateUI()
+                    return true
+                end
 
-    if ges.direction == "south" then
-        if self.ruler:moveToNextLine() then
-            self:updateUI()
-            return true
+                self.ui:handleEvent(Event:new("GotoViewRel", 1))
+                return true
+            end
         end
-
-        self.ui:handleEvent(Event:new("GotoViewRel", 1))
-        return true
     end
 
     return false
