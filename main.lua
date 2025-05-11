@@ -18,7 +18,7 @@ local ReadingRuler = InputContainer:extend({
 })
 
 function ReadingRuler:init()
-    logger.info("--- ReadingRuler init ---")
+    -- logger.info("--- ReadingRuler init ---")
 
     -- Initialize components --
     self.settings = Settings:new()
@@ -139,40 +139,40 @@ end
 
 -- Document Events --
 function ReadingRuler:onPageUpdate(new_page)
-    logger.info("--- ReadingRuler:onPageUpdate ---")
+    -- logger.info("--- ReadingRuler:onPageUpdate ---")
     return self.ruler_ui:onPageUpdate(new_page)
 end
 
 -- Gesture Events --
 function ReadingRuler:onSwipe(arg, ges)
-    logger.info("--- ReadingRuler:onSwipe ---")
+    -- logger.info("--- ReadingRuler:onSwipe ---")
     return self.ruler_ui:onSwipe(arg, ges)
 end
 
 function ReadingRuler:onTap(arg, ges)
-    logger.info("--- ReadingRuler:onTap ---")
+    -- logger.info("--- ReadingRuler:onTap ---")
     return self.ruler_ui:onTap(arg, ges)
 end
 
 -- Custom Events (Actions) --
 function ReadingRuler:onReadingRulerMoveToNextLine()
-    logger.info("--- ReadingRulerMoveToNextLine ---")
+    -- logger.info("--- ReadingRulerMoveToNextLine ---")
     self.ruler_ui:handleLineNavigation("next")
 end
 
 function ReadingRuler:onReadingRulerMoveToPreviousLine()
-    logger.info("--- ReadingRulerMoveToPreviousLine ---")
+    -- logger.info("--- ReadingRulerMoveToPreviousLine ---")
     self.ruler_ui:handleLineNavigation("prev")
 end
 
 function ReadingRuler:onReadingRulerSetState(state)
-    logger.info("--- ReadingRulerSetState:", state, "---")
+    -- logger.info("--- ReadingRulerSetState:", state, "---")
     self.ruler_ui:setEnabled(state)
 end
 
 function ReadingRuler:onReadingRulerToggle()
     local state = not self.settings:get("enabled")
-    logger.info("--- ReadingRulerToggle to:", state, "---")
+    -- logger.info("--- ReadingRulerToggle to:", state, "---")
     self.ruler_ui:setEnabled(state)
 end
 

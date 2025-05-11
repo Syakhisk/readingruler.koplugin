@@ -104,7 +104,7 @@ end
 
 -- Refresh only select region of the screen where the ruler has or will be drawn.
 function RulerUI:repaint()
-    logger.info("--- RulerUI:repaint ---")
+    -- logger.info("--- RulerUI:repaint ---")
 
     if not self.movable_widget then
         return
@@ -133,7 +133,7 @@ function RulerUI:paintTo(bb, x, y)
 
     -- Paint the ruler widget to the screen
     if self.movable_widget then
-        logger.info("--- RulerUI:paintTo ---")
+        -- logger.info("--- RulerUI:paintTo ---")
         self.movable_widget:paintTo(bb, x, y)
     end
 end
@@ -210,10 +210,10 @@ function RulerUI:onTap(_, ges)
 
     if is_tap_on_ruler then
         if is_tap_to_move then
-            logger.info("--- ReadingRuler: exit tap to move ---")
+            -- logger.info("--- ReadingRuler: exit tap to move ---")
             self.ruler:exitTapToMoveMode()
         else
-            logger.info("--- ReadingRuler: enter tap to move ---")
+            -- logger.info("--- ReadingRuler: enter tap to move ---")
             self.ruler:enterTapToMoveMode()
             self:notifyTapToMove()
         end
@@ -223,7 +223,7 @@ function RulerUI:onTap(_, ges)
     end
 
     if is_tap_to_move then
-        logger.info("--- ReadingRuler: tap to move ---")
+        -- logger.info("--- ReadingRuler: tap to move ---")
         self.ruler:moveToNearestLine(ges.pos.y)
         self.ruler:exitTapToMoveMode()
         self:updateUI()

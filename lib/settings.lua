@@ -100,8 +100,8 @@ function Settings:disable()
 end
 
 function Settings:___dump()
-    logger.info("--- Settings ---")
-    logger.info(require("ffi/serpent").block(self.settings.data))
+    -- logger.info("--- Settings ---")
+    -- logger.info(require("ffi/serpent").block(self.settings.data))
 end
 
 return Settings

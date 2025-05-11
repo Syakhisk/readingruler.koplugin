@@ -119,7 +119,7 @@ function Ruler:getNearestTextPositions(y)
     -- self:__printTextFromSbox(next)
 
     -- local after = os.clock()
-    -- logger.info(string.format("Ruler:getNearestTextPositions time: %0.6f", after - before))
+    -- -- logger.info(string.format("Ruler:getNearestTextPositions time: %0.6f", after - before))
 
     return { prev = prev, curr = nearest_sbox, next = next }
 end
@@ -131,11 +131,11 @@ function Ruler:getTexts(ignore_cache)
     local page = self.document:getCurrentPage()
 
     if not ignore_cache and self.cached_texts and self.cached_texts_page == page then
-        logger.info("--- Ruler: cache hit ---")
+        -- logger.info("--- Ruler: cache hit ---")
         return self.cached_texts
     end
 
-    logger.info("--- Ruler: cache miss ---")
+    -- logger.info("--- Ruler: cache miss ---")
 
     --- TODO: handle multi column
     local texts = self.ui.document:getTextFromPositions(
@@ -188,7 +188,7 @@ function Ruler:__printTextFromSbox(sbox)
     local page = self.document:getCurrentPage()
 
     if sbox == nil then
-        logger.info("nil")
+        -- logger.info("nil")
         return
     end
 
@@ -198,7 +198,7 @@ function Ruler:__printTextFromSbox(sbox)
         true
     )
 
-    logger.info(dbg_texts.text:sub(1, 20), sbox)
+    -- logger.info(dbg_texts.text:sub(1, 20), sbox)
 end
 
 return Ruler

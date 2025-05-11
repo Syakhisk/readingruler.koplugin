@@ -6,7 +6,7 @@ local M = {}
 M.dump = function(obj)
     -- Serialize the object to a string
     local serialized = serpent.block(obj, { comment = false, nocode = true })
-    logger.info(serialized)
+    -- logger.info(serialized)
 end
 
 return M
