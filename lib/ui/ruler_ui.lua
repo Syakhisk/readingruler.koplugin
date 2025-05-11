@@ -51,6 +51,11 @@ function RulerUI:init()
     self.is_built = false
 end
 
+-- Build the UI components needed, BUT not responsible for drawing them
+-- drawing will be taken care of by the updateUI/repaint functions.
+-- The reason is that, during initialization buildUI will be called.
+-- In that flow, we will draw the UI in the onPageUpdate function.
+-- @see RulerUI:setEnabled to see the flow of how the UI is built and drawn.
 function RulerUI:buildUI()
     -- Create or update the ruler line widget
     local line_props = self.ruler:getLineProperties()
@@ -75,11 +80,9 @@ function RulerUI:buildUI()
         ignore_events = ignore_events,
         self.touch_container_widget,
     })
-
-    -- self.is_built = true
 end
 
--- Set positions and styling of the ruler, and repaint the UI to reflect changes
+-- Set positions and styling of the ruler, and repaint the UI to reflect changes.
 function RulerUI:updateUI()
     local geom = self.ruler:getLineGeometry()
 
@@ -99,10 +102,7 @@ function RulerUI:updateUI()
     self:repaint()
 end
 
-function RulerUI:destroyUI()
-    self:repaint()
-end
-
+-- Refresh only select region of the screen where the ruler has or will be drawn.
 function RulerUI:repaint()
     logger.info("--- RulerUI:repaint ---")
 
@@ -125,6 +125,7 @@ function RulerUI:repaint()
     end)
 end
 
+-- We'll delegate the drawing of the movable container to MovableContainer widget.
 function RulerUI:paintTo(bb, x, y)
     if not self.settings:isEnabled() then
         return
@@ -137,46 +138,17 @@ function RulerUI:paintTo(bb, x, y)
     end
 end
 
-function RulerUI:setEnabled(enabled)
-    if enabled then
-        self.settings:enable()
-        self:buildUI()
-        self.ruler:setInitialPositionOnPage(self.document:getCurrentPage())
-        self:updateUI()
-        self:displayNotification(_("Reading ruler enabled"))
-    else
-        self.settings:disable()
-        self:destroyUI()
-        self:displayNotification(_("Reading ruler disabled"))
-    end
-end
-
-function RulerUI:toggleEnabled()
-    if self.settings:isEnabled() then
-        self:setEnabled(true)
-    else
-        self:setEnabled(false)
-    end
-end
-
-function RulerUI:displayNotification(text)
-    -- Only show notifications if enabled in settings
-    if not self.settings:get("notification") then
-        return
-    end
-
-    UIManager:show(Notification:new({
-        text = text,
-        timeout = 2,
-    }))
-end
-
+-- In each page update, we need to calculate the coordinates of the ruler line
+-- based on each page text lines and navigation direction (next, prev, jump).
 function RulerUI:onPageUpdate(new_page)
     if not self.settings:isEnabled() then
         return
     end
 
+    -- This will only calculate the ruler position
     self.ruler:setInitialPositionOnPage(new_page)
+
+    -- After calculating the position, we need to update the UI
     self:updateUI()
 end
 
@@ -204,7 +176,30 @@ function RulerUI:handleLineNavigation(direction)
     return false
 end
 
--- Gesture handling
+-- Ruler enabled state --
+function RulerUI:setEnabled(enabled)
+    if enabled then
+        self.settings:enable()
+        self:buildUI()
+        self.ruler:setInitialPositionOnPage(self.document:getCurrentPage())
+        self:updateUI()
+        self:displayNotification(_("Reading ruler enabled"))
+    else
+        self.settings:disable()
+        self:repaint()
+        self:displayNotification(_("Reading ruler disabled"))
+    end
+end
+
+function RulerUI:toggleEnabled()
+    if self.settings:isEnabled() then
+        self:setEnabled(true)
+    else
+        self:setEnabled(false)
+    end
+end
+
+-- Gesture handling --
 function RulerUI:onTap(_, ges)
     if not self.settings:isEnabled() then
         return false
@@ -262,6 +257,19 @@ function RulerUI:onSwipe(_, ges)
     end
 
     return false
+end
+
+-- Notifications --
+function RulerUI:displayNotification(text)
+    -- Only show notifications if enabled in settings
+    if not self.settings:get("notification") then
+        return
+    end
+
+    UIManager:show(Notification:new({
+        text = text,
+        timeout = 2,
+    }))
 end
 
 function RulerUI:notifyTapToMove()
