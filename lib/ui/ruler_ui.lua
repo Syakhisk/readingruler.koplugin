@@ -1,7 +1,6 @@
 local FrameContainer = require("ui/widget/container/framecontainer")
 local Device = require("device")
 local Geom = require("ui/geometry")
-local GestureRange = require("ui/gesturerange")
 local WidgetContainer = require("ui/widget/container/widgetcontainer")
 local MovableContainer = require("ui/widget/container/movablecontainer")
 local LineWidget = require("ui/widget/linewidget")
@@ -47,31 +46,6 @@ function RulerUI:init()
     self.touch_container_widget = nil
     self.movable_widget = nil
     self.is_visible = false
-
-    -- Create gesture handling
-    self:setupGestures()
-end
-
-function RulerUI:setupGestures()
-    -- Set up gesture ranges for different parts of the screen
-    if Device:isTouchDevice() then
-        local range = Geom:new({ x = 0, y = 0, w = Screen:getWidth(), h = Screen:getHeight() })
-
-        self.inputContainer.ges_events = {
-            Tap = {
-                GestureRange:new({
-                    ges = "tap",
-                    range = range,
-                }),
-            },
-            Swipe = {
-                GestureRange:new({
-                    ges = "swipe",
-                    range = range,
-                }),
-            },
-        }
-    end
 end
 
 function RulerUI:buildUI()
@@ -166,9 +140,9 @@ function RulerUI:onPageUpdate(new_page)
     self:updateUI()
 end
 
---- Handle navigation between lines or pages
--- @param direction string "next" or "prev" to indicate navigation direction
--- @return boolean True if handled
+--- Handle navigation between lines or pages, returns true if handled
+---@param direction string "next" or "prev" to indicate navigation direction
+---@return boolean
 function RulerUI:handleLineNavigation(direction)
     if direction == "next" then
         if self.ruler:moveToNextLine() then

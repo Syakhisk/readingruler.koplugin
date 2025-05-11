@@ -8,7 +8,7 @@ local DEFAULTS = {
     enabled = false,
     line_thickness = 2,
     line_intensity = 0.7,
-    follow_mode = "tap", -- tap, swipe, hold
+    follow_mode = "tap", -- tap, swipe
     notification = true,
     position = 0.5, -- 0.0 to 1.0 (percentage of screen height)
 }
