@@ -192,11 +192,7 @@ function RulerUI:setEnabled(enabled)
 end
 
 function RulerUI:toggleEnabled()
-    if self.settings:isEnabled() then
-        self:setEnabled(true)
-    else
-        self:setEnabled(false)
-    end
+    self:setEnabled(not self.settings:isEnabled())
 end
 
 -- Gesture handling --
