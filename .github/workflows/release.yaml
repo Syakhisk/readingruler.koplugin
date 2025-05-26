@@ -1,0 +1,33 @@
+name: Build and Release KOReader Plugin
+
+on:
+  push:
+    branches:
+      - main
+    tags:
+      - "v*"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Prepare plugin folder
+        run: |
+          mkdir readingruler.koplugin
+          shopt -s extglob
+          cp -r !(readingruler.koplugin|.git|.github) readingruler.koplugin/
+
+      - name: Create zip archive
+        run: |
+          zip -r readingruler.koplugin.zip readingruler.koplugin
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: readingruler.koplugin.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
