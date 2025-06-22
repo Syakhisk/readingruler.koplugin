@@ -1,5 +1,9 @@
 ![cover](https://github.com/user-attachments/assets/e2d5d86d-3376-46a6-a265-9be218021b14)
 
+<p align="center">
+  <a href="https://ko-fi.com/syakhisk" target="_blank"> <img src="https://ko-fi.com/img/githubbutton_sm.svg"/> </a> 
+</p>
+
 # Reading Ruler Plugin for KOReader
 
 The **Reading Ruler** plugin is a tool designed to enhance the reading experience on KOReader by providing a movable horizontal line that helps readers focus on specific lines of text. This is especially useful for individuals who prefer guided reading or have difficulty maintaining focus while reading.
@@ -57,6 +61,7 @@ Some features of this plugin may not work as expected in two columns mode, this 
 I have been using this plugin myself, and as of now, I don't need any additional features. However, I am open to feature requests to improve the plugin. Pull requests are also welcomed!
 
 ## Laundry List
+
 TODO:
 
 - [ ] Update screenshots in readme and add demo
