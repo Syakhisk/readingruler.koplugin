@@ -2,8 +2,6 @@ name: Build and Release KOReader Plugin
 
 on:
   push:
-    branches:
-      - master
     tags:
       - "v*"
 
