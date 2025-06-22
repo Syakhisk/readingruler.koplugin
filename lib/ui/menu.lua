@@ -2,6 +2,12 @@ local _ = require("gettext")
 local Menu = {}
 local UIManager = require("ui/uimanager")
 local SpinWidget = require("ui/widget/spinwidget")
+local Github = require("lib/github")
+local DataStorage = require("datastorage")
+local InfoMessage = require("ui/widget/infomessage")
+local Font = require("ui/font")
+
+local VERSION = require("readingruler_version")
 
 function Menu:new(args)
     local o = {}
@@ -89,6 +95,37 @@ function Menu:addToMainMenu(menu_items)
                 callback = function()
                     self.settings:toggle("notification")
                 end,
+            },
+            {
+                text = _("About"),
+                callback = function()
+                    local new_release = Github:newestRelease()
+                    local version = table.concat(VERSION, ".")
+                    require("logger").info(version)
+                    local new_release_str = ""
+                    if new_release then
+                        new_release_str = " (latest v" .. new_release .. ")"
+                    end
+                    local settings_file = DataStorage:getSettingsDir() .. "/" .. "readingruler_settings.lua"
+
+                    UIManager:show(InfoMessage:new({
+                        text = [[
+Reading Ruler Plugin
+v]] .. version .. new_release_str .. [[
+
+
+Reading Ruler is a plugin that brings movable underlines to KOReader!
+
+Project:
+github.com/syakhisk/readingruler.koplugin
+
+Settings:
+]] .. settings_file,
+                        face = Font:getFace("cfont", 18),
+                        show_icon = false,
+                    }))
+                end,
+                keep_menu_open = true,
             },
         },
     }
