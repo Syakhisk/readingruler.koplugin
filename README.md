@@ -50,7 +50,7 @@ Automatically navigate to the next or previous page when reaching the end of the
          <img src="https://github.com/user-attachments/assets/cc785f42-c1ba-490d-9d4b-7643aa8bb291">
       </td>
       <td>
-         <img src="https://github.com/user-attachments/assets/22dce65c-4285-4dd8-a49e-25855838a3ac">
+         <img src="https://github.com/user-attachments/assets/d4b50994-75e3-432f-85fe-105f402ef5e3">
       </td>
    </tr>
 </table>
