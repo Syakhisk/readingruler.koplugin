@@ -6,8 +6,8 @@ local logger = require("logger")
 local SETTINGS_FILE = DataStorage:getSettingsDir() .. "/readingruler_settings.lua"
 local DEFAULTS = {
     enabled = false,
-    line_thickness = 2,
-    line_intensity = 0.7,
+    line_thickness = 2000,
+    line_intensity = 0,
     navigation_mode = "tap", -- tap, swipe, none
     notification = true,
 }
