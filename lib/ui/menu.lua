@@ -135,7 +135,7 @@ function Menu:showLineThicknessDialog()
     local spin_widget = SpinWidget:new({
         value = self.settings:get("line_thickness"),
         value_min = 0,
-        value_max = 100,
+        value_max = 10000,
         value_step = 1,
         value_hold_step = 5,
         title_text = _("Line thickness"),
