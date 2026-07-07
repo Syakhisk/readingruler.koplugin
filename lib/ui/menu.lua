@@ -18,6 +18,7 @@ function Menu:new(args)
     o.ruler = args.ruler
     o.ruler_ui = args.ruler_ui
     o.ui = args.ui
+    o.auto_mover = args.auto_mover
 
     return o
 end
@@ -76,6 +77,17 @@ function Menu:addToMainMenu(menu_items)
                         end,
                     },
                     {
+                        text = _("Automatic (reading speed)"),
+                        checked_func = function()
+                            return self.settings:get("navigation_mode") == "auto"
+                        end,
+                        callback = function()
+                            self.settings:set("navigation_mode", "auto")
+                            self.auto_mover:stop()
+                            self.ruler_ui:displayNotification(_("Automatic reading mode"))
+                        end,
+                    },
+                    {
                         text = _("None (bring-your-own gesture)"),
                         checked_func = function()
                             return self.settings:get("navigation_mode") == "none"
@@ -86,6 +98,11 @@ function Menu:addToMainMenu(menu_items)
                         end,
                     },
                 },
+            },
+            {
+                text = _("Auto mode WPM"),
+                keep_menu_open = true,
+                callback = function() self:showAutoWpmDialog() end,
             },
             {
                 text = _("Notifications"),
@@ -150,6 +167,16 @@ function Menu:showLineThicknessDialog()
     })
 
     UIManager:show(spin_widget)
+end
+
+function Menu:showAutoWpmDialog()
+    UIManager:show(SpinWidget:new({
+        value = self.settings:get("auto_mode_wpm"),
+        value_min = 60, value_max = 600, value_step = 10, value_hold_step = 50,
+        title_text = _("Words per minute"),
+        ok_text = _("Set WPM"),
+        callback = function(v) self.settings:set("auto_mode_wpm", v.value) end,
+    }))
 end
 
 function Menu:showLineIntensityDialog()

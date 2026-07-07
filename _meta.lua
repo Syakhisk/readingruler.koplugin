@@ -3,6 +3,6 @@ return {
     name = "readingruler",
     fullname = _("Reading Ruler"),
     description = _(
-        [[Improves your intermitten reading experience by adding a ruler to the screen. It can be moved around with a swipe or a hold-and-tap!]]
+        [[Improves your reading experience with a movable underline ruler. Supports tap/swipe navigation, tap-to-move, and automatic advance based on reading speed.]]
     ),
 }

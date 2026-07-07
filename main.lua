@@ -8,6 +8,7 @@ local logger = require("logger")
 
 local Settings = require("lib/settings")
 local Ruler = require("lib/ruler")
+local AutoMover = require("lib/auto_mover")
 local RulerUI = require("lib/ui/ruler_ui")
 local Menu = require("lib/ui/menu")
 local Dispatcher = require("dispatcher")
@@ -37,11 +38,20 @@ function ReadingRuler:init()
         document = self.document,
     })
 
+    self.auto_mover = AutoMover:new({
+        ruler = self.ruler,
+        ruler_ui = self.ruler_ui,
+        settings = self.settings,
+    })
+
+    self.ruler_ui.auto_mover = self.auto_mover
+
     self.menu = Menu:new({
         settings = self.settings,
         ruler = self.ruler,
         ruler_ui = self.ruler_ui,
         ui = self.ui,
+        auto_mover = self.auto_mover,
     })
 
     --- Register to main menu so that `addToMainMenu` is called
@@ -127,6 +137,22 @@ function ReadingRuler:registerActions()
         title = _("Reading Ruler: toggle"),
         general = true,
     })
+
+    Dispatcher:registerAction("reading_ruler_wpm_increase", {
+        category = "incrementalnumber",
+        event = "ReadingRulerWpmIncrease",
+        title = _("Reading Ruler: Increase WPM"),
+        general = true,
+        min = 1, max = 100, step = 1, default = 10,
+    })
+
+    Dispatcher:registerAction("reading_ruler_wpm_decrease", {
+        category = "incrementalnumber",
+        event = "ReadingRulerWpmDecrease",
+        title = _("Reading Ruler: Decrease WPM"),
+        general = true,
+        min = 1, max = 100, step = 1, default = 10,
+    })
 end
 
 function ReadingRuler:addToMainMenu(menu_items)
@@ -150,7 +176,7 @@ function ReadingRuler:onSwipe(arg, ges)
 end
 
 function ReadingRuler:onTap(arg, ges)
-    -- logger.info("--- ReadingRuler:onTap ---")
+    logger.info("ReadingRuler: onTap delegating to ruler_ui, mode=", self.settings:get("navigation_mode"))
     return self.ruler_ui:onTap(arg, ges)
 end
 
@@ -174,6 +200,18 @@ function ReadingRuler:onReadingRulerToggle()
     local state = not self.settings:get("enabled")
     -- logger.info("--- ReadingRulerToggle to:", state, "---")
     self.ruler_ui:setEnabled(state)
+end
+
+function ReadingRuler:onReadingRulerWpmIncrease(step)
+    local wpm = self.settings:get("auto_mode_wpm")
+    self.settings:set("auto_mode_wpm", math.min(wpm + math.abs(step), 1000))
+    self.ruler_ui:displayNotification(string.format("WPM: %d", self.settings:get("auto_mode_wpm")))
+end
+
+function ReadingRuler:onReadingRulerWpmDecrease(step)
+    local wpm = self.settings:get("auto_mode_wpm")
+    self.settings:set("auto_mode_wpm", math.max(wpm - math.abs(step), 1))
+    self.ruler_ui:displayNotification(string.format("WPM: %d", self.settings:get("auto_mode_wpm")))
 end
 
 return ReadingRuler

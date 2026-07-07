@@ -36,6 +36,7 @@ function RulerUI:new(args)
     o.settings = args.settings
     o.ui = args.ui
     o.document = args.document
+    o.auto_mover = args.auto_mover
 
     -- Initialize the ruler UI
     o:init()
@@ -196,7 +197,7 @@ function RulerUI:toggleEnabled()
 end
 
 -- Gesture handling --
-function RulerUI:onTap(_, ges)
+function RulerUI:onTap(__, ges)
     if not self.settings:isEnabled() then
         return false
     end
@@ -226,6 +227,15 @@ function RulerUI:onTap(_, ges)
         return true
     end
 
+    if self.settings:get("navigation_mode") == "auto" then
+        local started = self.auto_mover:toggle()
+        local msg = started and _("Auto mode started") or _("Auto mode paused")
+        -- logger.info("ReadingRuler: auto mode tap, started=", started, ", returning true")
+        self:displayNotification(msg)
+        if started then self:updateUI() end
+        return true
+    end
+
     if self.settings:get("navigation_mode") == "tap" then
         return self:handleLineNavigation("next")
     end
@@ -233,14 +243,14 @@ function RulerUI:onTap(_, ges)
     return false
 end
 
-function RulerUI:onSwipe(_, ges)
+function RulerUI:onSwipe(__, ges)
     if not self.settings:isEnabled() then
         return false
     end
 
     local navigation_mode = self.settings:get("navigation_mode")
 
-    if navigation_mode == "swipe" or navigation_mode == "tap" then
+    if navigation_mode == "swipe" or navigation_mode == "tap" or navigation_mode == "auto" then
         -- Swipe up will move to previous line either way
         if ges.direction == "north" then
             return self:handleLineNavigation("prev")

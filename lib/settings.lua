@@ -8,7 +8,8 @@ local DEFAULTS = {
     enabled = false,
     line_thickness = 2,
     line_intensity = 0.7,
-    navigation_mode = "tap", -- tap, swipe, none
+    navigation_mode = "tap", -- tap, swipe, none, auto
+    auto_mode_wpm = 240,
     notification = true,
 }
 
