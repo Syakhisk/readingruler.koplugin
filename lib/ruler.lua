@@ -124,6 +124,32 @@ function Ruler:getNearestTextPositions(y)
     return { prev = prev, curr = nearest_sbox, next = next }
 end
 
+---@return number word count from the current line (min 1)
+function Ruler:getCurrentLineWordCount()
+    local positions = self:getNearestTextPositions()
+    if not positions.curr then return 1 end
+
+    -- ponytail: sboxes are line-level (one per line). Clip query at midpoint
+    -- between this line's bottom and next line's top. The -1 avoids getTextFromPositions'
+    -- inclusive bounds bleeding into the next line's text.
+    local line_box = positions.curr
+    local curr_bottom = line_box.y + line_box.h
+    local next_top = positions.next and positions.next.y or curr_bottom
+    local query_bottom = (curr_bottom + next_top) / 2 - 1
+
+    local page = self.document:getCurrentPage()
+    local line_texts = self.ui.document:getTextFromPositions(
+        { x = line_box.x, y = line_box.y, page = page },
+        { x = line_box.x + line_box.w, y = query_bottom },
+        true
+    )
+    if not line_texts or not line_texts.text then return 1 end
+
+    local count = 0
+    for _ in string.gmatch(line_texts.text, "%S+") do count = count + 1 end
+    return math.max(count, 1)
+end
+
 -- Get the textboxes (dimen) of texts on the current page
 ---@param ignore_cache? boolean
 ---@return table
