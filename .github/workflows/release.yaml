@@ -4,6 +4,14 @@ on:
   push:
     tags:
       - "v*"
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Existing tag to build and attach the zip to'
+        required: true
+
+permissions:
+  contents: write
 
 jobs:
   build:
@@ -11,7 +19,7 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Prepare plugin folder
         run: |
@@ -22,8 +30,13 @@ jobs:
       - name: Create zip archive
         run: |
           zip -r readingruler.koplugin.zip readingruler.koplugin
+          unzip -l readingruler.koplugin.zip
 
-      - name: Create GitHub Release
-        uses: softprops/action-gh-release@v2
-        with:
-          files: readingruler.koplugin.zip
+      - name: Attach zip to the release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ github.event.inputs.tag || github.ref_name }}
+        run: |
+          gh release view "$TAG" --repo "$GITHUB_REPOSITORY" > /dev/null 2>&1 \
+            || gh release create "$TAG" --repo "$GITHUB_REPOSITORY" --title "$TAG"
+          gh release upload "$TAG" readingruler.koplugin.zip --clobber --repo "$GITHUB_REPOSITORY"
