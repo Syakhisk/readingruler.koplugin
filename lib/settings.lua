@@ -8,6 +8,7 @@ local DEFAULTS = {
     enabled = false,
     line_thickness = 2,
     line_intensity = 0.7,
+    jump_lines = 1,          -- <-- Añade esta línea
     navigation_mode = "tap", -- tap, swipe, none
     notification = true,
 }
