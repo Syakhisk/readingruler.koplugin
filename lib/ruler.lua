@@ -53,20 +53,34 @@ function Ruler:setInitialPositionOnPage(new_page)
 end
 
 function Ruler:moveToNextLine()
+    local step = self.settings:get("jump_lines") or 1
     local positions = self:getNearestTextPositions()
-    if positions.next then
-        self:move(0, positions.next.y + positions.next.h)
-        return true
+    
+    if positions.nearest_idx then
+        local next_idx = positions.nearest_idx + step
+        local next_sbox = positions.texts.sboxes[next_idx]
+        
+        if next_sbox then
+            self:move(0, next_sbox.y + next_sbox.h)
+            return true
+        end
     end
 
     return false
 end
 
 function Ruler:moveToPreviousLine()
+    local step = self.settings:get("jump_lines") or 1
     local positions = self:getNearestTextPositions()
-    if positions.prev then
-        self:move(0, positions.prev.y + positions.prev.h)
-        return true
+    
+    if positions.nearest_idx then
+        local prev_idx = positions.nearest_idx - step
+        local prev_sbox = positions.texts.sboxes[prev_idx]
+        
+        if prev_sbox then
+            self:move(0, prev_sbox.y + prev_sbox.h)
+            return true
+        end
     end
 
     return false
@@ -121,7 +135,7 @@ function Ruler:getNearestTextPositions(y)
     -- local after = os.clock()
     -- -- logger.info(string.format("Ruler:getNearestTextPositions time: %0.6f", after - before))
 
-    return { prev = prev, curr = nearest_sbox, next = next }
+    return { prev = prev, curr = nearest_sbox, next = next, nearest_idx = nearest_idx, texts = texts }
 end
 
 -- Get the textboxes (dimen) of texts on the current page

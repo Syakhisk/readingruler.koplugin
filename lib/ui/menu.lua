@@ -88,6 +88,13 @@ function Menu:addToMainMenu(menu_items)
                 },
             },
             {
+                text = _("Lines to jump"),
+                keep_menu_open = true,
+                callback = function()
+                    self:showJumpLinesDialog()
+                end,
+            },
+            {
                 text = _("Notifications"),
                 checked_func = function()
                     return self.settings:get("notification")
@@ -168,6 +175,23 @@ function Menu:showLineIntensityDialog()
             if self.settings:isEnabled() then
                 self.ruler_ui:updateUI()
             end
+        end,
+    })
+
+    UIManager:show(spin_widget)
+end
+
+function Menu:showJumpLinesDialog()
+    local spin_widget = SpinWidget:new({
+        value = self.settings:get("jump_lines"),
+        value_min = 1,
+        value_max = 10,  -- Límite máximo de saltos (puedes cambiarlo)
+        value_step = 1,
+        value_hold_step = 2,
+        title_text = _("Lines to jump"),
+        ok_text = _("Set lines"),
+        callback = function(new_lines)
+            self.settings:set("jump_lines", new_lines.value)
         end,
     })
 
